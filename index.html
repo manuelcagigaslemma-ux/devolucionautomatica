@@ -1,0 +1,1475 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Diagnóstico Anual</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Base equivalente a la que inyecta el visor de artifacts.
+     [hidden]{display:none!important} es imprescindible: las pestanas usan el
+     atributo hidden sobre elementos con display:flex en linea. */
+  :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  body{margin:0;font-size:14px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+<style>
+/* Layout: pestañas Carga / Devolución → grilla mensual con cálculo en vivo → informe generado por secciones numeradas */
+:root{
+  --paper:#EDF1F0; --surface:#FFFFFF; --surface-2:#F6F8F7;
+  --ink:#16211E; --ink-2:#55635F; --ink-3:#879591;
+  --rule:#D5DCDA; --rule-strong:#B6C1BE;
+  --accent:#2F6F62; --accent-soft:#E3EDEA;
+  --pos:#1C6B49; --pos-soft:#E4F0E8;
+  --neg:#A1301D; --neg-soft:#FBEAE6;
+  --warn:#8A5A12; --warn-soft:#FBF1DE;
+  --font-display:"Spectral",Georgia,"Times New Roman",serif;
+  --font-ui:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#101614; --surface:#18201E; --surface-2:#1E2725;
+  --ink:#E8EEEB; --ink-2:#A3B0AC; --ink-3:#7B8884;
+  --rule:#2B3634; --rule-strong:#3C4845;
+  --accent:#6FB3A2; --accent-soft:#1E2E2A;
+  --pos:#5FBF8E; --pos-soft:#152B22;
+  --neg:#E8836B; --neg-soft:#2E1E1A;
+  --warn:#D6A95C; --warn-soft:#2B2416;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#101614; --surface:#18201E; --surface-2:#1E2725;
+  --ink:#E8EEEB; --ink-2:#A3B0AC; --ink-3:#7B8884;
+  --rule:#2B3634; --rule-strong:#3C4845;
+  --accent:#6FB3A2; --accent-soft:#1E2E2A;
+  --pos:#5FBF8E; --pos-soft:#152B22;
+  --neg:#E8836B; --neg-soft:#2E1E1A;
+  --warn:#D6A95C; --warn-soft:#2B2416;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1060px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{margin:0;font-family:var(--font-display);font-weight:600;text-wrap:balance}
+h1{font-size:1.65rem;letter-spacing:-.01em}
+h2{font-size:1.1rem}
+.eyebrow{font-size:.68rem;text-transform:uppercase;letter-spacing:.11em;color:var(--ink-3);font-weight:600}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:4px}
+.pad{padding:18px}
+.note{font-size:.78rem;color:var(--ink-2);margin:0}
+
+header.top{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:12px}
+header.top p{margin:2px 0 0;color:var(--ink-2);font-size:.86rem;max-width:62ch}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--rule)}
+.tab{font-family:inherit;font-size:.88rem;font-weight:500;color:var(--ink-2);background:transparent;border:none;border-bottom:3px solid transparent;border-radius:0;padding:10px 16px;cursor:pointer}
+.tab:hover{color:var(--accent)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+.ident{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);font-weight:600}
+input,select,textarea{font-family:inherit;font-size:.95rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;padding:8px 10px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.field .hint{font-size:.72rem;color:var(--ink-3)}
+
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:16px;min-width:0}
+.panel.lead{border-color:var(--rule-strong);border-top:3px solid var(--accent)}
+.panel h3{font-size:.95rem;margin-bottom:2px}
+.panel .sub{font-size:.72rem;color:var(--ink-3);margin-bottom:12px}
+.line{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:5px 0;border-bottom:1px dotted var(--rule);font-size:.86rem}
+.line:last-child{border-bottom:none}
+.line span:first-child{color:var(--ink-2)}
+.line.total{margin-top:8px;padding:9px 10px;border:1px solid var(--rule-strong);background:var(--surface-2);font-weight:600}
+.line.total span:first-child{color:var(--ink);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em}
+.line.total .num{font-size:1.02rem}
+.ind{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.ind div{font-size:.76rem;color:var(--ink-2)}
+.ind b{font-family:var(--font-num);color:var(--ink)}
+
+.gridhead{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+.tablebox{overflow-x:auto;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:separate;border-spacing:0;width:100%}
+table.grid{min-width:800px}
+th,td{padding:0;text-align:right;font-size:.86rem}
+thead th{position:sticky;top:0;z-index:3;background:var(--surface-2);color:var(--ink-2);font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;padding:9px 10px;border-bottom:1px solid var(--rule-strong);white-space:nowrap}
+table.grid thead th:first-child,table.grid tbody th{position:sticky;left:0;z-index:4;background:var(--surface-2);text-align:left}
+table.grid tbody th{z-index:2;font-weight:500;font-size:.8rem;padding:0 10px;border-right:1px solid var(--rule);color:var(--ink-2);white-space:nowrap;font-family:var(--font-num)}
+table.grid tbody tr:nth-child(even) th,table.grid tbody tr:nth-child(even) td{background:var(--surface-2)}
+table.grid tbody tr.cur th,table.grid tbody tr.cur td{background:var(--accent-soft)}
+table.grid tbody tr.cur th{box-shadow:inset 3px 0 0 var(--accent)}
+tbody td{border-bottom:1px solid var(--rule)}
+tbody td input{background:transparent;border:none;border-radius:0;text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums;padding:8px 10px;font-size:.84rem}
+tbody td input:hover{background:var(--accent-soft)}
+tbody td input:focus{background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent)}
+td.calc{padding:8px 10px;font-family:var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink-2)}
+td.calc.sep{border-left:1px solid var(--rule-strong)}
+td.calc.res{font-weight:600}
+tfoot th,tfoot td{background:var(--surface-2);border-top:2px solid var(--ink);padding:10px;font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:600;font-size:.84rem}
+tfoot th{position:sticky;left:0;z-index:4;text-align:left;font-family:var(--font-ui);font-size:.68rem;text-transform:uppercase;letter-spacing:.09em}
+
+/* ---------- informe ---------- */
+.report{display:flex;flex-direction:column;gap:30px}
+.rhead{border-bottom:3px solid var(--ink);padding-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.rhead .cli{font-family:var(--font-display);font-size:1.9rem;font-weight:600;line-height:1.15}
+.rhead .meta{font-size:.86rem;color:var(--ink-2)}
+.keyrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.key{padding:18px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);display:flex;flex-direction:column;gap:6px;min-width:0}
+.key.flag{border-color:var(--rule-strong);border-top:3px solid var(--accent)}
+.key .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);font-weight:600}
+.key .v{font-family:var(--font-display);font-size:1.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.key .d{font-size:.78rem;color:var(--ink-2)}
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec>h3{font-family:var(--font-display);font-size:1.22rem;font-weight:600;display:flex;gap:10px;align-items:baseline}
+.sec>h3 .n{font-family:var(--font-num);font-size:.8rem;color:var(--accent);font-weight:600}
+.sec p{margin:0;font-size:.95rem;line-height:1.6;color:var(--ink-2);max-width:68ch}
+.sec p strong{color:var(--ink);font-weight:600}
+.verdict{padding:20px;border-radius:4px;border-left:4px solid var(--accent);background:var(--accent-soft)}
+.verdict.bad{border-left-color:var(--neg);background:var(--neg-soft)}
+.verdict.good{border-left-color:var(--pos);background:var(--pos-soft)}
+.verdict p{font-family:var(--font-display);font-size:1.3rem;line-height:1.4;color:var(--ink);max-width:56ch}
+.rlist{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.rlist li{display:flex;gap:12px;font-size:.92rem;line-height:1.55;color:var(--ink-2)}
+.rlist li .mk{font-family:var(--font-num);font-size:.76rem;font-weight:600;color:var(--accent);padding-top:3px;flex:0 0 22px}
+.rlist li b{color:var(--ink);font-weight:600}
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.case{padding:16px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);opacity:.55;display:flex;flex-direction:column;gap:6px}
+.case.on{opacity:1;border-color:var(--rule-strong);border-left:4px solid var(--accent)}
+.case.on.bad{border-left-color:var(--neg)}
+.case .ct{font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);font-weight:600}
+.case h4{margin:0;font-size:1rem;font-weight:600;font-family:var(--font-display)}
+.case p{font-size:.84rem;line-height:1.5;color:var(--ink-2);margin:0;max-width:none}
+.chart{display:flex;gap:4px;align-items:flex-end;padding:10px 0}
+.chart .col{flex:1;display:flex;flex-direction:column;min-width:0}
+.chart .up{height:66px;display:flex;align-items:flex-end}
+.chart .dn{height:66px;display:flex;align-items:flex-start;border-top:1px solid var(--rule-strong)}
+.chart .bar{width:100%;background:var(--pos);border-radius:2px 2px 0 0}
+.chart .bar.nb{background:var(--neg);border-radius:0 0 2px 2px}
+.chart .lbl{font-size:.64rem;text-align:center;color:var(--ink-3);padding-top:5px;overflow:hidden}
+.quote{padding:22px;background:var(--surface);border:1px solid var(--rule-strong);border-radius:4px;display:flex;flex-direction:column;gap:12px}
+.quote p{font-size:.95rem;line-height:1.65;color:var(--ink);max-width:70ch}
+.disc{font-size:.8rem;color:var(--ink-3);line-height:1.55;border-top:1px solid var(--rule);padding-top:14px;max-width:72ch}
+.imgwrap{border:1px solid var(--rule-strong);border-radius:4px;overflow:hidden;background:#F4F6F5;max-width:540px;line-height:0}
+.imgwrap canvas{display:block;width:100%;height:auto}
+
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font-family:inherit;font-size:.86rem;font-weight:500;color:var(--ink);background:var(--surface-2);border:1px solid var(--rule-strong);border-radius:3px;padding:9px 14px;cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button.primary:hover{opacity:.9;color:var(--surface)}
+.toast{font-size:.8rem;color:var(--accent)}
+.toast.bad{color:var(--neg)}
+.paste{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.paste textarea{font-family:var(--font-num);font-size:.76rem;min-height:88px}
+.out textarea{font-family:var(--font-num);font-size:.76rem;min-height:110px;resize:vertical;line-height:1.45}
+.banner{padding:10px 14px;border-left:3px solid var(--warn);background:var(--warn-soft);font-size:.82rem;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.banner button{font-size:.78rem;padding:6px 11px}
+.empty{padding:48px 24px;text-align:center;color:var(--ink-2);display:flex;flex-direction:column;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--rule);border-radius:4px}
+.empty b{font-family:var(--font-display);font-size:1.05rem;font-weight:600;color:var(--ink)}
+.empty span{font-size:.84rem;max-width:46ch}
+footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:12px}
+@media (max-width:560px){h1{font-size:1.4rem}.wrap{padding-block:20px 44px}.rhead .cli{font-size:1.5rem}.tab{padding:10px 12px;font-size:.82rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="eyebrow">Análisis de coherencia fiscal</div>
+      <h1>Diagnóstico Anual</h1>
+      <p>Cargá las ventas, compras, tasa, sueldos e ingresos brutos de cada mes. La página calcula el ejercicio y redacta la devolución para el cliente.</p>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab" id="tabCarga" role="tab" aria-selected="true" aria-controls="viewCarga">Carga de datos</button>
+    <button type="button" class="tab" id="tabInforme" role="tab" aria-selected="false" aria-controls="viewInforme">Devolución</button>
+  </div>
+
+  <!-- ===================== CARGA ===================== -->
+  <div id="viewCarga" role="tabpanel" style="display:flex;flex-direction:column;gap:22px">
+
+    <div class="banner" id="demoBanner">
+      <span><b>Datos de ejemplo cargados</b> — son inventados, para mostrar cómo sale la devolución. Vaciá la planilla y cargá los del cliente.</span>
+      <button type="button" id="btnVaciarDemo">Vaciar la planilla</button>
+    </div>
+
+    <section class="card pad">
+      <div class="eyebrow" style="margin-bottom:12px">Identificación</div>
+      <div class="ident">
+        <div class="field">
+          <label for="cliente">Cliente</label>
+          <input id="cliente" type="text" placeholder="APELLIDO, Nombre" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="condicion">Condición</label>
+          <select id="condicion">
+            <option>Responsable Inscripto</option>
+            <option>Monotributista</option>
+            <option>Exento</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="anio">Ejercicio</label>
+          <input id="anio" type="number" min="2000" max="2100" step="1">
+        </div>
+        <div class="field">
+          <label for="mesCorriente">Último mes liquidado</label>
+          <select id="mesCorriente"></select>
+        </div>
+        <div class="field">
+          <label for="markup">Markup proyección</label>
+          <input id="markup" type="text" inputmode="decimal">
+          <span class="hint">Criterio del papel de trabajo: 1,3</span>
+        </div>
+        <div class="field">
+          <label for="coef">Coef. ganancia</label>
+          <input id="coef" type="text" inputmode="decimal">
+          <span class="hint">Ganancia = Costos × markup × coef.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="strip">
+      <div class="panel lead">
+        <h3>Información anualizada</h3>
+        <div class="sub" id="subAnual">Acumulado del ejercicio</div>
+        <div id="linesAnual"></div>
+        <div class="ind" id="indAnual"></div>
+      </div>
+      <div class="panel">
+        <h3>Parcial mes corriente</h3>
+        <div class="sub" id="subMes">—</div>
+        <div id="linesMes"></div>
+        <div class="ind" id="indMes"></div>
+      </div>
+      <div class="panel">
+        <h3>Proyección</h3>
+        <div class="sub" id="subProy">—</div>
+        <div id="linesProy"></div>
+        <div class="ind" id="indProy"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="gridhead">
+        <div>
+          <div class="eyebrow">Cálculos mensuales</div>
+          <h2>Carga mes por mes</h2>
+        </div>
+        <p class="note">Se acepta formato argentino (1.234.567,89), con o sin signo $. Bruto y TOTAL se calculan solos.</p>
+      </div>
+      <div class="tablebox">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th scope="col">Mes</th>
+              <th scope="col">Ventas</th>
+              <th scope="col">Compras</th>
+              <th scope="col">Tasa</th>
+              <th scope="col">Sueldos</th>
+              <th scope="col">Ing. Brutos</th>
+              <th scope="col">Bruto</th>
+              <th scope="col">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Acumulado</th>
+              <td id="tVentas"></td><td id="tCompras"></td><td id="tTasa"></td>
+              <td id="tSueldos"></td><td id="tIibb"></td>
+              <td id="tBruto"></td><td id="tTotal"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="paste">
+        <label class="eyebrow" for="pasteBox">Pegar desde Excel (opcional)</label>
+        <p class="note">Copiá el rango con las etiquetas de fila (por ejemplo A2:M8 de la hoja de cálculos) y pegalo acá: carga los doce meses de una vez.</p>
+        <textarea id="pasteBox" placeholder="Ventas	0	6.597.058,24	7.635.443,42 …&#10;Compras	0	6.657.458,91	9.404.845,53 …"></textarea>
+        <div class="actions">
+          <button type="button" id="btnPaste">Importar pegado</button>
+          <span class="toast" id="pasteMsg"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card pad out" style="display:flex;flex-direction:column;gap:12px">
+      <div class="eyebrow">Terminar</div>
+      <div class="actions">
+        <button type="button" class="primary" id="btnVer">Ver la devolución</button>
+        <button type="button" id="btnCopiarDatos">Copiar los datos</button>
+        <button type="button" id="btnVaciar">Vaciar planilla</button>
+        <span class="toast" id="finMsg"></span>
+      </div>
+      <p class="note">«Copiar los datos» deja el código de la planilla en el portapapeles, para mandarlo al estudio por mail o mensaje y que armen el Excel.</p>
+      <details>
+        <summary style="cursor:pointer;font-size:.8rem;color:var(--ink-2);padding:4px 0">Código de la planilla</summary>
+        <div style="display:flex;flex-direction:column;gap:8px;padding-top:10px">
+          <div class="actions">
+            <button type="button" id="btnLoad">Cargar el código de abajo</button>
+            <span class="toast" id="copyMsg"></span>
+          </div>
+          <textarea id="jsonOut" spellcheck="false" aria-label="Código de la planilla"></textarea>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <!-- ===================== DEVOLUCIÓN ===================== -->
+  <div id="viewInforme" role="tabpanel" hidden>
+    <div id="reportHost"></div>
+  </div>
+
+  <footer class="foot">
+    El diagnóstico es un indicador de coherencia fiscal: toma las compras del mes como costo y no contempla la variación de existencias, las amortizaciones ni el resto de los gastos. No constituye un balance ni reemplaza la determinación impositiva del ejercicio.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  var ABREV=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  var KEYS=["ventas","compras","tasa","sueldos","iibb"];
+  var LABELS={ventas:"Ventas",compras:"Compras",tasa:"Tasa",sueldos:"Sueldos",iibb:"Ingresos Brutos"};
+  var STORE="diaganual.v1";
+
+  /* ------------------------------------------------- números */
+  function parseNum(s){
+    if(typeof s==="number") return isFinite(s)?s:0;
+    if(s==null) return 0;
+    var t=String(s).trim();
+    if(!t) return 0;
+    var neg=/^\(.*\)$/.test(t)||/-/.test(t.replace(/[^\d.,\-]/g,""));
+    t=t.replace(/[^\d.,]/g,"");
+    if(!t) return 0;
+    var lastC=t.lastIndexOf(","), lastD=t.lastIndexOf(".");
+    if(lastC>-1&&lastD>-1){
+      if(lastC>lastD){ t=t.replace(/\./g,"").replace(",","."); }
+      else { t=t.replace(/,/g,""); }
+    } else if(lastC>-1){
+      var after=t.length-lastC-1;
+      t=(after===3&&/^\d{1,3}(,\d{3})+$/.test(t))?t.replace(/,/g,""):t.replace(",",".");
+    } else if(lastD>-1){
+      var afterD=t.length-lastD-1;
+      if(afterD===3&&/^\d{1,3}(\.\d{3})+$/.test(t)) t=t.replace(/\./g,"");
+    }
+    var n=parseFloat(t);
+    if(!isFinite(n)) return 0;
+    return neg?-Math.abs(n):n;
+  }
+  var fmtM=new Intl.NumberFormat("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
+  var fmtP=new Intl.NumberFormat("es-AR",{style:"percent",minimumFractionDigits:2,maximumFractionDigits:2});
+  var fmtP1=new Intl.NumberFormat("es-AR",{style:"percent",minimumFractionDigits:1,maximumFractionDigits:1});
+  var fmt0=new Intl.NumberFormat("es-AR",{maximumFractionDigits:0});
+  function money(n){ return (n<0?"-":"")+"$ "+fmtM.format(Math.abs(n)); }
+  function money0(n){ return (n<0?"-":"")+"$ "+fmt0.format(Math.abs(n)); }
+  function pct(n){ return isFinite(n)?fmtP.format(n):"—"; }
+  function pct1(n){ return isFinite(n)?fmtP1.format(n):"—"; }
+  function sgn(n){ return n>0.005?"pos":(n<-0.005?"neg":""); }
+  function round2(n){ return Math.round(n*100)/100; }
+
+  /* ------------------------------------------------- estado */
+  var EJEMPLO={
+    cliente:"EJEMPLO S.R.L.", condicion:"Responsable Inscripto", anio:2026,
+    mes_corriente:7, markup:1.3, coef:0.16, demo:true,
+    meses:{
+      1:{ventas:4200000,compras:3570000,tasa:12600,sueldos:180000,iibb:27300},
+      2:{ventas:4650000,compras:4000000,tasa:13950,sueldos:180000,iibb:30225},
+      3:{ventas:5100000,compras:4480000,tasa:15300,sueldos:180000,iibb:33150},
+      4:{ventas:5400000,compras:4810000,tasa:16200,sueldos:180000,iibb:35100},
+      5:{ventas:5250000,compras:4780000,tasa:15750,sueldos:180000,iibb:34125},
+      6:{ventas:5600000,compras:5150000,tasa:16800,sueldos:180000,iibb:36400},
+      7:{ventas:5750000,compras:5400000,tasa:17250,sueldos:180000,iibb:37375},
+      8:{ventas:0,compras:0,tasa:0,sueldos:0,iibb:0},
+      9:{ventas:0,compras:0,tasa:0,sueldos:0,iibb:0},
+      10:{ventas:0,compras:0,tasa:0,sueldos:0,iibb:0},
+      11:{ventas:0,compras:0,tasa:0,sueldos:0,iibb:0},
+      12:{ventas:0,compras:0,tasa:0,sueldos:0,iibb:0}
+    }
+  };
+
+  var state=null, esDemo=false;
+  function blankMeses(){ var m={}; for(var i=1;i<=12;i++) m[i]={ventas:0,compras:0,tasa:0,sueldos:0,iibb:0}; return m; }
+  function normalize(d){
+    var o={ cliente:String(d&&d.cliente||""), condicion:String(d&&d.condicion||"Responsable Inscripto"),
+            anio:parseInt(d&&d.anio,10)||new Date().getFullYear(),
+            mes_corriente:Math.min(12,Math.max(1,parseInt(d&&d.mes_corriente,10)||1)),
+            markup:(d&&isFinite(parseNum(d.markup))&&parseNum(d.markup))||1.3,
+            coef:(d&&isFinite(parseNum(d.coef))&&parseNum(d.coef))||0.16,
+            meses:blankMeses() };
+    var src=(d&&d.meses)||{};
+    for(var i=1;i<=12;i++){ var r=src[i]||src[String(i)]||{};
+      for(var k=0;k<KEYS.length;k++){ o.meses[i][KEYS[k]]=parseNum(r[KEYS[k]]); } }
+    return o;
+  }
+  function cargar(){
+    try{
+      var raw=localStorage.getItem(STORE);
+      if(raw){ var d=JSON.parse(raw); esDemo=!!d.demo; return normalize(d); }
+    }catch(e){}
+    esDemo=true;
+    return normalize(EJEMPLO);
+  }
+  function guardar(){
+    try{ var p=plain(); p.demo=esDemo; localStorage.setItem(STORE,JSON.stringify(p)); }catch(e){}
+  }
+  function salirDemo(){
+    if(!esDemo) return;
+    esDemo=false;
+    document.getElementById("demoBanner").hidden=true;
+  }
+
+  /* ------------------------------------------------- cálculo */
+  function mesCalc(m){ var b=m.ventas-m.compras; return {bruto:b,total:b-m.tasa-m.sueldos-m.iibb}; }
+  function tieneDatos(m){ return !!(m.ventas||m.compras||m.tasa||m.sueldos||m.iibb); }
+  function acumulado(){
+    var a={ventas:0,compras:0,tasa:0,sueldos:0,iibb:0};
+    for(var i=1;i<=12;i++) for(var k=0;k<KEYS.length;k++) a[KEYS[k]]+=state.meses[i][KEYS[k]];
+    var c=mesCalc(a); a.bruto=c.bruto; a.total=c.total; return a;
+  }
+  function indicesCargados(){ var r=[]; for(var i=1;i<=12;i++) if(tieneDatos(state.meses[i])) r.push(i); return r; }
+  function conPerdida(){ var n=0; indicesCargados().forEach(function(i){ if(mesCalc(state.meses[i]).total<0) n++; }); return n; }
+
+  /* longest monotone run; cmp(prev,cur) true = la serie sigue en esa dirección */
+  function rachaMas(serie,cmp){
+    if(serie.length<2) return {len:1,start:0,end:0};
+    var bestLen=1,bestStart=0,len=1,start=0;
+    for(var i=1;i<serie.length;i++){
+      if(cmp(serie[i-1],serie[i])){ len++; } else { len=1; start=i; }
+      if(len>bestLen){ bestLen=len; bestStart=start; }
+    }
+    return {len:bestLen,start:bestStart,end:bestStart+bestLen-1};
+  }
+
+  function analisis(){
+    var a=acumulado(), idx=indicesCargados(), mc=state.mes_corriente;
+    var m=state.meses[mc], cm=mesCalc(m);
+    var serie=idx.map(function(i){
+      var mm=state.meses[i], c=mesCalc(mm);
+      return { mes:i, ventas:mm.ventas, compras:mm.compras, bruto:c.bruto, total:c.total,
+               margen: mm.ventas? c.bruto/mm.ventas : null };
+    });
+    var conVentas=serie.filter(function(s){ return s.margen!==null; });
+
+    // tendencia del margen
+    var tend=null;
+    if(conVentas.length>=3){
+      var peor=rachaMas(conVentas,function(p,c){ return c.margen < p.margen - 1e-9; });
+      var mejor=rachaMas(conVentas,function(p,c){ return c.margen > p.margen + 1e-9; });
+      var win = peor.len>=mejor.len ? {r:peor,dir:-1} : {r:mejor,dir:1};
+      if(win.r.len>=3){
+        tend={ dir:win.dir, len:win.r.len,
+               desde:conVentas[win.r.start], hasta:conVentas[win.r.end] };
+      }
+    }
+
+    // mes con salto de compras desproporcionado
+    var atip=null;
+    for(var j=1;j<serie.length;j++){
+      var p=serie[j-1], c=serie[j];
+      if(!p.compras) continue;
+      var dc=c.compras/p.compras-1;
+      var dv=p.ventas? c.ventas/p.ventas-1 : 0;
+      if(dc>0.25 && dc-dv>0.15 && (!atip||dc>atip.dc)) atip={mes:c.mes,dc:dc,dv:dv,prev:p.mes};
+    }
+
+    // crecimiento punta a punta
+    var cre=null;
+    if(serie.length>=3){
+      var f=serie[0], l=serie[serie.length-1];
+      if(f.compras>0&&f.ventas>0) cre={ desde:f.mes, hasta:l.mes,
+        compras:l.compras/f.compras-1, ventas:l.ventas/f.ventas-1 };
+    }
+
+    // pico de ventas
+    var pico=null;
+    if(conVentas.length>=3){
+      var mx=conVentas[0];
+      conVentas.forEach(function(s){ if(s.ventas>mx.ventas) mx=s; });
+      var ult=conVentas[conVentas.length-1];
+      if(mx.mes!==ult.mes && mx.ventas>0) pico={mes:mx.mes,ventas:mx.ventas,caida:ult.ventas/mx.ventas-1,ultMes:ult.mes};
+    }
+
+    // proyección
+    var costos=m.compras+m.tasa+m.sueldos+m.iibb;
+    var gan=costos*state.markup*state.coef;
+    var esperada=costos+gan;
+    var equilibrio = m.ventas? costos/m.ventas-1 : null;
+    var objetivo = m.ventas? esperada/m.ventas-1 : null;
+    var ajustePrecio = m.ventas? m.compras/m.ventas-1 : null;
+
+    var cargaFiscal=a.tasa+a.iibb;
+
+    // meses hasta que el resultado entre en rojo, si el margen sigue cayendo al ritmo de la racha
+    var mesesARojo=null;
+    if(tend&&tend.dir<0&&tend.len>=3&&m.ventas>0&&a.total>0.005){
+      var margenCritico=(m.tasa+m.sueldos+m.iibb)/m.ventas;
+      var delta=(tend.hasta.margen-tend.desde.margen)/(tend.len-1);
+      var actual=(m.ventas-m.compras)/m.ventas;
+      if(delta<-1e-9&&actual>margenCritico) mesesARojo=(actual-margenCritico)/(-delta);
+    }
+
+    return {
+      a:a, idx:idx, serie:serie, conVentas:conVentas, mc:mc, m:m, cm:cm,
+      margen: a.ventas? a.bruto/a.ventas : null,
+      comprasSV: a.ventas? a.compras/a.ventas : null,
+      resSV: a.ventas? a.total/a.ventas : null,
+      margenMes: m.ventas? cm.bruto/m.ventas : null,
+      perdida: conPerdida(),
+      cargaFiscal: cargaFiscal,
+      cargaFiscalSV: a.ventas? cargaFiscal/a.ventas : null,
+      pesoBruto: a.total<0&&a.bruto<0 ? a.bruto/a.total : null,
+      pesoFiscal: a.total<0 ? -cargaFiscal/a.total : null,
+      tend:tend, atip:atip, cre:cre, pico:pico,
+      costos:costos, gan:gan, esperada:esperada,
+      equilibrio:equilibrio, objetivo:objetivo, ajustePrecio:ajustePrecio,
+      sigMes: MESES[mc%12],
+      sinSueldos: a.sueldos===0 && a.ventas>0,
+      mesesARojo: mesesARojo
+    };
+  }
+
+  /* ------------------------------------------------- grilla */
+  var tbody=document.getElementById("tbody"), inputs={};
+  function buildGrid(){
+    tbody.textContent="";
+    for(var i=1;i<=12;i++){
+      var tr=document.createElement("tr"); tr.id="row-"+i;
+      var th=document.createElement("th"); th.scope="row"; tr.appendChild(th);
+      inputs[i]={};
+      for(var k=0;k<KEYS.length;k++){
+        var td=document.createElement("td");
+        var inp=document.createElement("input");
+        inp.type="text"; inp.inputMode="decimal"; inp.id="f-"+i+"-"+KEYS[k];
+        inp.setAttribute("aria-label",LABELS[KEYS[k]]+" "+MESES[i-1]);
+        inp.dataset.mes=i; inp.dataset.key=KEYS[k];
+        inp.addEventListener("input",onEdit);
+        inp.addEventListener("blur",onBlur);
+        inp.addEventListener("focus",function(e){ e.target.select(); });
+        inputs[i][KEYS[k]]=inp; td.appendChild(inp); tr.appendChild(td);
+      }
+      var tdB=document.createElement("td"); tdB.className="calc sep"; tdB.id="c-bruto-"+i; tr.appendChild(tdB);
+      var tdT=document.createElement("td"); tdT.className="calc res"; tdT.id="c-total-"+i; tr.appendChild(tdT);
+      tbody.appendChild(tr);
+    }
+  }
+  function onEdit(e){
+    salirDemo();
+    state.meses[+e.target.dataset.mes][e.target.dataset.key]=parseNum(e.target.value);
+    render(true); guardar();
+  }
+  function onBlur(e){ e.target.value=fmtM.format(state.meses[+e.target.dataset.mes][e.target.dataset.key]); }
+
+  /* ------------------------------------------------- render carga */
+  function lineRow(label,val,cls){
+    return '<div class="line'+(cls||"")+'"><span>'+label+'</span>'+
+           '<span class="num '+sgn(val)+'">'+money(val)+'</span></div>';
+  }
+  function render(skipInputs){
+    var mc=state.mes_corriente;
+    for(var i=1;i<=12;i++){
+      var m=state.meses[i], c=mesCalc(m);
+      if(!skipInputs) for(var k=0;k<KEYS.length;k++) inputs[i][KEYS[k]].value=fmtM.format(m[KEYS[k]]);
+      var tr=document.getElementById("row-"+i);
+      tr.className=(i===mc?"cur":"");
+      tr.firstChild.textContent=ABREV[i-1]+"-"+String(state.anio).slice(-2);
+      var eb=document.getElementById("c-bruto-"+i), et=document.getElementById("c-total-"+i);
+      eb.textContent=money(c.bruto); eb.className="calc sep "+sgn(c.bruto);
+      et.textContent=money(c.total); et.className="calc res "+sgn(c.total);
+    }
+    var x=analisis(), a=x.a;
+    var ids={tVentas:a.ventas,tCompras:a.compras,tTasa:a.tasa,tSueldos:a.sueldos,tIibb:a.iibb,tBruto:a.bruto,tTotal:a.total};
+    Object.keys(ids).forEach(function(id){
+      var el=document.getElementById(id); el.textContent=money(ids[id]); el.className=sgn(ids[id]);
+    });
+
+    document.getElementById("subAnual").textContent="Hasta "+MESES[mc-1]+" "+state.anio+" · "+x.idx.length+" meses con movimiento";
+    document.getElementById("linesAnual").innerHTML=
+      lineRow("Ventas",a.ventas)+lineRow("Compras",a.compras)+lineRow("Bruto",a.bruto)+
+      lineRow("Tasa",a.tasa)+lineRow("Sueldos",a.sueldos)+lineRow("Ingresos Brutos",a.iibb)+
+      lineRow("Total",a.total," total");
+    document.getElementById("indAnual").innerHTML=
+      '<div>Margen bruto <b class="'+sgn(a.bruto)+'">'+(x.margen===null?"—":pct(x.margen))+'</b></div>'+
+      '<div>Compras s/ventas <b>'+(x.comprasSV===null?"—":pct(x.comprasSV))+'</b></div>'+
+      '<div>Meses con pérdida <b class="'+(x.perdida?"neg":"")+'">'+x.perdida+'</b></div>';
+
+    var m2=x.m;
+    document.getElementById("subMes").textContent=ABREV[mc-1]+"-"+String(state.anio).slice(-2)+" · último mes liquidado";
+    document.getElementById("linesMes").innerHTML=
+      lineRow("Ventas",m2.ventas)+lineRow("Compras",m2.compras)+lineRow("Bruto",x.cm.bruto)+
+      lineRow("Tasa",m2.tasa)+lineRow("Sueldos",m2.sueldos)+lineRow("Ingresos Brutos",m2.iibb)+
+      lineRow("Total",x.cm.total," total");
+    document.getElementById("indMes").innerHTML=
+      '<div>Margen bruto <b class="'+sgn(x.cm.bruto)+'">'+(x.margenMes===null?"—":pct(x.margenMes))+'</b></div>'+
+      '<div>Resultado s/ventas <b class="'+sgn(x.cm.total)+'">'+(m2.ventas?pct(x.cm.total/m2.ventas):"—")+'</b></div>';
+
+    document.getElementById("subProy").textContent="Base "+ABREV[mc-1]+"-"+String(state.anio).slice(-2)+" → objetivo "+x.sigMes;
+    document.getElementById("linesProy").innerHTML=
+      lineRow("Costos "+MESES[mc-1],x.costos)+lineRow("Ganancia proyectada",x.gan)+
+      lineRow("Ventas esperadas "+x.sigMes,x.esperada," total");
+    document.getElementById("indProy").innerHTML=
+      '<div>Markup × coef. <b>'+fmtM.format(state.markup)+' × '+fmtM.format(state.coef)+'</b></div>'+
+      '<div>Salto exigido vs. '+ABREV[mc-1]+' <b class="'+(x.objetivo>0?"neg":"pos")+'">'+(x.objetivo===null?"—":pct(x.objetivo))+'</b></div>';
+
+    document.getElementById("jsonOut").value=JSON.stringify(plain(),null,2);
+  }
+
+  function plain(){
+    var meses={};
+    for(var i=1;i<=12;i++){ var m=state.meses[i];
+      meses[i]={ventas:round2(m.ventas),compras:round2(m.compras),tasa:round2(m.tasa),
+                sueldos:round2(m.sueldos),iibb:Math.round(m.iibb*100000)/100000}; }
+    return { cliente:state.cliente, condicion:state.condicion, anio:state.anio,
+             mes_corriente:state.mes_corriente, markup:state.markup, coef:state.coef, meses:meses };
+  }
+
+  /* ------------------------------------------------- informe */
+  function el(tag,cls,txt){
+    var e=document.createElement(tag);
+    if(cls) e.className=cls;
+    if(txt!=null) e.textContent=txt;
+    return e;
+  }
+  function para(html){ var p=document.createElement("p"); p.innerHTML=html; return p; }
+  function seccion(n,titulo){
+    var s=el("section","sec");
+    var h=el("h3");
+    h.appendChild(el("span","n",n));
+    h.appendChild(el("span",null,titulo));
+    s.appendChild(h);
+    return s;
+  }
+  function nSerie(x){ return x.idx.length; }
+
+  function textoVeredicto(x){
+    var a=x.a;
+    if(!x.idx.length) return {tono:"",txt:"No hay meses cargados todavía."};
+    if(a.total<-0.005){
+      if(a.bruto<-0.005){
+        var ratio=x.comprasSV!==null? fmtM.format(x.comprasSV*100) : null;
+        return {tono:"bad", txt: ratio
+          ? "Las compras superan a las ventas: cada $100 de venta se sostienen con $"+ratio+" de compra."
+          : "Las compras del período superan a las ventas."};
+      }
+      return {tono:"bad", txt:"El margen bruto es positivo ("+pct(x.margen)+") pero no alcanza a cubrir la tasa, los sueldos y los ingresos brutos."};
+    }
+    if(a.total<=0.005&&a.total>=-0.005) return {tono:"", txt:"El ejercicio queda en equilibrio: no hay ganancia ni pérdida."};
+    return {tono:"good", txt:"El ejercicio cierra con ganancia de "+money0(a.total)+", un "+pct(x.resSV)+" de las ventas."};
+  }
+
+  function textoTendencia(x){
+    if(!x.tend) return null;
+    var t=x.tend;
+    var d = t.dir<0 ? "se deteriora" : "mejora";
+    return "El margen bruto "+d+" <strong>"+t.len+" meses consecutivos</strong>, de "+
+           pct(t.desde.margen)+" en "+MESES[t.desde.mes-1].toLowerCase()+" a "+
+           pct(t.hasta.margen)+" en "+MESES[t.hasta.mes-1].toLowerCase()+".";
+  }
+
+  function textoCausa(x){
+    var out=[];
+    if(x.cre){
+      var c=x.cre;
+      out.push("Entre "+MESES[c.desde-1].toLowerCase()+" y "+MESES[c.hasta-1].toLowerCase()+
+               " las compras variaron "+pct1(c.compras)+" y las ventas "+pct1(c.ventas)+".");
+    }
+    if(x.pico&&x.pico.caida<-0.02){
+      out.push("Las ventas cayeron "+pct1(Math.abs(x.pico.caida))+" desde el pico de "+
+               MESES[x.pico.mes-1].toLowerCase()+".");
+    }
+    if(x.atip){
+      out.push("<strong>"+MESES[x.atip.mes-1]+" es atípico:</strong> las compras saltaron "+
+               pct1(x.atip.dc)+" contra "+MESES[x.atip.prev-1].toLowerCase()+
+               " mientras las ventas variaron "+pct1(x.atip.dv)+
+               ". Conviene identificar qué se compró ese mes antes de leerlo como costo corriente.");
+    }
+    return out;
+  }
+
+  function construirInforme(){
+    var x=analisis();
+    var host=document.getElementById("reportHost");
+    host.textContent="";
+
+    if(!x.idx.length){
+      var em=el("div","empty");
+      em.appendChild(el("b",null,"Todavía no hay datos"));
+      em.appendChild(el("span",null,"Cargá al menos un mes en la pestaña de carga y la devolución se arma sola, con el diagnóstico, la proyección y el comentario del período."));
+      host.appendChild(em);
+      return;
+    }
+
+    var root=el("div","report");
+    var a=x.a, ver=textoVeredicto(x);
+    var ultimo=x.idx[x.idx.length-1], primero=x.idx[0];
+
+    /* --- encabezado --- */
+    var rh=el("div","rhead");
+    rh.appendChild(el("div","eyebrow","Devolución del período"));
+    rh.appendChild(el("div","cli",state.cliente||"(cliente sin nombre)"));
+    rh.appendChild(el("div","meta",
+      state.condicion+" · Ejercicio "+state.anio+" · "+MESES[primero-1]+" a "+MESES[ultimo-1]+
+      " · "+x.idx.length+(x.idx.length===1?" mes con movimiento":" meses con movimiento")));
+    root.appendChild(rh);
+
+    /* --- cifras clave --- */
+    var kr=el("div","keyrow");
+    function keyBox(k,v,d,cls,flag){
+      var b=el("div","key"+(flag?" flag":""));
+      b.appendChild(el("div","k",k));
+      var vv=el("div","v "+(cls||""),v); b.appendChild(vv);
+      if(d) b.appendChild(el("div","d",d));
+      return b;
+    }
+    kr.appendChild(keyBox("Resultado fiscal del ejercicio",money0(a.total),
+      "Hasta "+MESES[ultimo-1].toLowerCase()+" "+state.anio+
+      (x.resSV===null?"":" · "+pct(x.resSV)+" de las ventas"),sgn(a.total),true));
+    kr.appendChild(keyBox("Margen bruto",x.margen===null?"—":pct(x.margen),
+      "Ventas menos compras",sgn(a.bruto)));
+    kr.appendChild(keyBox("Meses con pérdida",x.perdida+" de "+x.idx.length,
+      x.perdida===x.idx.length&&x.perdida>1?"Todos los meses cargados":"",x.perdida?"neg":"pos"));
+    root.appendChild(kr);
+
+    /* --- veredicto --- */
+    var vd=el("div","verdict"+(ver.tono?" "+ver.tono:""));
+    vd.appendChild(para(ver.txt));
+    root.appendChild(vd);
+
+    /* --- 1. cuadro --- */
+    var s1=seccion("01","El cuadro del período");
+    var t1=el("div","tablebox");
+    var tb1=el("table");
+    var filas=[["Ventas",a.ventas,x.m.ventas],["Compras",a.compras,x.m.compras],
+               ["Bruto",a.bruto,x.cm.bruto],["Tasa",a.tasa,x.m.tasa],
+               ["Sueldos",a.sueldos,x.m.sueldos],["Ingresos Brutos",a.iibb,x.m.iibb],
+               ["TOTAL",a.total,x.cm.total]];
+    var head=el("thead");
+    var hr=el("tr");
+    ["Concepto","Acumulado "+state.anio,MESES[x.mc-1]+" "+state.anio].forEach(function(h,i){
+      var th=el("th",null,h); th.scope="col";
+      th.style.width=(i===0?"40%":"30%");
+      if(i===0) th.style.textAlign="left";
+      hr.appendChild(th);
+    });
+    head.appendChild(hr); tb1.appendChild(head);
+    var body1=el("tbody");
+    filas.forEach(function(f){
+      var tr=el("tr");
+      var th=el("th",null,f[0]); th.scope="row";
+      th.style.textAlign="left"; th.style.padding="9px 10px"; th.style.fontWeight=(f[0]==="TOTAL"||f[0]==="Bruto")?"600":"400";
+      th.style.fontFamily="var(--font-ui)";
+      tr.appendChild(th);
+      [f[1],f[2]].forEach(function(v){
+        var td=el("td","calc "+sgn(v),money(v));
+        if(f[0]==="TOTAL") td.style.fontWeight="600";
+        tr.appendChild(td);
+      });
+      if(f[0]==="TOTAL"){ tr.style.background="var(--surface-2)"; }
+      body1.appendChild(tr);
+    });
+    tb1.appendChild(body1); t1.appendChild(tb1); s1.appendChild(t1);
+    s1.appendChild(para("TOTAL = Bruto − Tasa − Sueldos − Ingresos Brutos. La columna de la derecha es el último mes liquidado."));
+    root.appendChild(s1);
+
+    /* --- 2. evolución --- */
+    var s2=seccion("02","Cómo evolucionó mes a mes");
+    var maxAbs=0;
+    x.serie.forEach(function(s){ maxAbs=Math.max(maxAbs,Math.abs(s.total)); });
+    var ch=el("div","chart");
+    x.serie.forEach(function(s){
+      var col=el("div","col");
+      var up=el("div","up"), dn=el("div","dn");
+      var h=maxAbs? Math.max(2,Math.round(Math.abs(s.total)/maxAbs*62)) : 0;
+      if(s.total>=0){ var b=el("div","bar"); b.style.height=h+"px"; up.appendChild(b); }
+      else { var b2=el("div","bar nb"); b2.style.height=h+"px"; dn.appendChild(b2); }
+      col.appendChild(up); col.appendChild(dn);
+      col.appendChild(el("span","lbl",ABREV[s.mes-1]));
+      ch.appendChild(col);
+    });
+    s2.appendChild(ch);
+    s2.appendChild(para("Resultado (TOTAL) de cada mes cargado. La línea es el cero."));
+    var tend=textoTendencia(x);
+    if(tend) s2.appendChild(para(tend));
+    textoCausa(x).forEach(function(t){ s2.appendChild(para(t)); });
+    root.appendChild(s2);
+
+    /* --- 3. de dónde sale el resultado --- */
+    if(a.total<-0.005&&x.pesoFiscal!==null){
+      var s3=seccion("03","De dónde sale el resultado");
+      if(x.pesoBruto!==null){
+        s3.appendChild(para("De la pérdida acumulada de "+money0(a.total)+", <strong>"+
+          pct1(x.pesoBruto)+" nace en el margen bruto</strong> —la relación entre lo que se compra y lo que se vende— y "+
+          pct1(x.pesoFiscal)+" en la tasa y los ingresos brutos."));
+      }
+      s3.appendChild(para("La tasa y los ingresos brutos suman "+money0(x.cargaFiscal)+
+        (x.cargaFiscalSV!==null?", el <strong>"+pct(x.cargaFiscalSV)+" de la facturación</strong>":"")+
+        ". Aun eliminándolos por completo, el ejercicio cerraría en "+money0(a.bruto)+"."));
+      if(a.bruto<0) s3.appendChild(para("Cualquier plan que apunte a la carga tributaria y no al margen mueve una fracción menor del problema."));
+      root.appendChild(s3);
+    }
+
+    /* --- 4. qué significa el signo --- */
+    var s4=seccion(a.total<-0.005?"04":"03","Qué significa este resultado");
+    var cs=el("div","cases");
+    var casos=[
+      {t:"Positivo",h:"Hay ganancia",p:"Queda por ver si ese monto alcanza para vivir y para pagar los bienes que se compraron.",on:a.total>0.005},
+      {t:"Cero o cercano a cero",h:"No se ganó ni se perdió",p:"Hay que explicar con qué se cubren los gastos particulares del período.",on:a.total<=0.005&&a.total>=-0.005},
+      {t:"Negativo",h:"Hay pérdida",p:"No se puede justificar cómo se pagan los gastos y además hay que explicar con qué se financió la pérdida.",on:a.total<-0.005,bad:true}
+    ];
+    casos.forEach(function(c){
+      var d=el("div","case"+(c.on?" on":"")+(c.on&&c.bad?" bad":""));
+      d.appendChild(el("div","ct",c.t+(c.on?" · es este caso":"")));
+      d.appendChild(el("h4",null,c.h));
+      d.appendChild(para(c.p));
+      cs.appendChild(d);
+    });
+    s4.appendChild(cs);
+    root.appendChild(s4);
+
+    /* --- 5. hipótesis (solo si el bruto es negativo) --- */
+    if(a.bruto<-0.005){
+      var s5=seccion("05","Tres explicaciones posibles");
+      s5.appendChild(para("Que las compras superen a las ventas de manera sostenida admite tres lecturas, y no se excluyen entre sí:"));
+      var ul=el("ul","rlist");
+      [["A","<b>Acumulación de stock.</b> La pérdida no es real: la mercadería está en el depósito, inmovilizada como bien de cambio. Se verifica con inventario físico valuado."],
+       ["B","<b>Bienes de uso imputados como compra.</b> Rodados, máquinas o instalaciones cargados al costo del mes en lugar de activarse. Se verifica revisando los comprobantes de mayor monto."],
+       ["C","<b>Inconsistencia en el circuito.</b> Ventas sin facturar o compras sobrefacturadas. Se verifica conciliando caja y acreditaciones bancarias contra la facturación emitida."]
+      ].forEach(function(p){
+        var li=el("li"); li.appendChild(el("span","mk",p[0])); li.appendChild(para(p[1])); ul.appendChild(li);
+      });
+      s5.appendChild(ul);
+      s5.appendChild(para("<strong>El test que decide:</strong> si el inventario al cierre de "+
+        MESES[ultimo-1].toLowerCase()+" creció alrededor de "+money0(Math.abs(a.bruto))+
+        " contra el inicial, la pérdida es aparente y se explica por stock. Si creció mucho menos, la diferencia es pérdida real o descalce de facturación."));
+      root.appendChild(s5);
+    }
+
+    /* --- 6. riesgos --- */
+    var sN = a.bruto<-0.005 ? "06" : (a.total<-0.005?"05":"04");
+    var s6=seccion(sN,"Exposición a revisar");
+    var ul6=el("ul","rlist");
+    var riesgos=[];
+    if(/monotributista/i.test(state.condicion)){
+      riesgos.push(["1","<b>Categoría y límite de facturación.</b> Corresponde controlar la facturación acumulada del período contra el límite de la categoría vigente y la recategorización que toque."]);
+      if(a.bruto<-0.005) riesgos.push(["2","<b>Compras por encima de las ventas.</b> En monotributo las compras no generan crédito fiscal computable, así que el desvío no se diluye: queda como inconsistencia entre la magnitud de la operación y lo facturado."]);
+      riesgos.push([String(riesgos.length+1),"<b>Justificación patrimonial.</b> Sin resultado que sostenga el consumo del período, hay que identificar el origen de los fondos."]);
+    } else {
+      if(a.bruto<-0.005) riesgos.push(["1","<b>IVA: saldo a favor que no se consume.</b> Compras por encima de ventas acumulan crédito fiscal técnico. Es un activo inmovilizado que pierde valor y queda a la vista."]);
+      if(a.total<-0.005) riesgos.push([String(riesgos.length+1),"<b>Ganancias: quebranto acumulado.</b> Se arrastra, pero solo se absorbe contra ganancias futuras y con plazo. Si el resultado no revierte, se pierde."]);
+      if(a.total<-0.005) riesgos.push([String(riesgos.length+1),"<b>Justificación patrimonial.</b> Sin resultado positivo no hay renta que sostenga el consumo del período: hay que identificar con qué se vivió y con qué se financió la pérdida."]);
+      if(a.bruto<-0.005) riesgos.push([String(riesgos.length+1),"<b>Perfil de riesgo.</b> La inconsistencia sostenida entre compras y ventas es uno de los desvíos que más atención llama en una verificación."]);
+    }
+    if(x.sinSueldos) riesgos.push([String(riesgos.length+1),"<b>Sueldos en cero.</b> No hay remuneraciones declaradas sobre "+money0(a.ventas)+" de facturación. Si hay personal, corresponde regularizar; si no lo hay, conviene dejar documentado por qué la operación no lo requiere."]);
+    if(!riesgos.length) riesgos.push(["1","<b>Sin desvíos estructurales.</b> El cuadro no muestra inconsistencias entre compras, ventas y carga tributaria. Lo que corresponde es sostener el seguimiento mensual."]);
+    riesgos.forEach(function(r){
+      var li=el("li"); li.appendChild(el("span","mk",r[0])); li.appendChild(para(r[1])); ul6.appendChild(li);
+    });
+    s6.appendChild(ul6);
+    root.appendChild(s6);
+
+    /* --- 7. proyección --- */
+    var s7=seccion(String(parseInt(sN,10)+1).padStart(2,"0"),"Proyección de "+x.sigMes);
+    if(x.m.ventas>0){
+      s7.appendChild(para("Con la estructura de costos de "+MESES[x.mc-1].toLowerCase()+
+        " ("+money0(x.costos)+"), "+x.sigMes.toLowerCase()+" llega al <strong>equilibrio con ventas de "+
+        money0(x.costos)+"</strong>, un "+pct1(Math.abs(x.equilibrio))+
+        (x.equilibrio>0?" por encima":" por debajo")+" de "+MESES[x.mc-1].toLowerCase()+"."));
+      s7.appendChild(para("Sumando la ganancia estimada del papel de trabajo (markup "+fmtM.format(state.markup)+
+        " × coeficiente "+fmtM.format(state.coef)+", es decir "+pct1(state.markup*state.coef)+
+        " de los costos), el objetivo asciende a <strong>"+money0(x.esperada)+"</strong>, un "+
+        pct1(Math.abs(x.objetivo))+(x.objetivo>0?" por encima":" por debajo")+
+        " de "+MESES[x.mc-1].toLowerCase()+"."));
+      if(x.objetivo>0.25){
+        s7.appendChild(para("Un salto de esa magnitud en un mes no es un pronóstico razonable: hay que leerlo como la brecha a cerrar, en varios meses o con una corrección de precios."));
+      }
+      if(x.ajustePrecio>0.005){
+        s7.appendChild(para("<strong>La vía de precios:</strong> a volumen constante, un ajuste de "+
+          pct1(x.ajustePrecio)+" sobre los precios de "+MESES[x.mc-1].toLowerCase()+
+          " lleva el margen bruto a cero. Es la medida más directa y la primera que conviene contrastar contra el mercado."));
+      }
+    } else {
+      s7.appendChild(para("No hay ventas registradas en "+MESES[x.mc-1].toLowerCase()+
+        ", así que no se puede proyectar sobre ese mes. Elegí como mes corriente el último con facturación."));
+    }
+    root.appendChild(s7);
+
+    /* --- 8. plan --- */
+    var s8=seccion(String(parseInt(sN,10)+2).padStart(2,"0"),"Qué conviene hacer");
+    var ul8=el("ul","rlist"); var plan=[];
+    if(a.bruto<-0.005){
+      plan.push("Practicar <b>inventario físico valuado</b> al cierre de "+MESES[ultimo-1].toLowerCase()+" y compararlo contra el inicial. Define si la pérdida es real o está inmovilizada en stock.");
+      plan.push("Depurar las compras del período, separando bienes de uso y gastos que no son costo del mes.");
+      plan.push("Constatar los proveedores y los comprobantes de mayor monto.");
+      plan.push("Conciliar caja y acreditaciones bancarias contra la facturación emitida, mes por mes.");
+    }
+    if(x.atip) plan.push("Revisar en detalle <b>"+MESES[x.atip.mes-1].toLowerCase()+"</b>, donde las compras se despegaron de la serie.");
+    if(x.ajustePrecio>0.005) plan.push("Medir el ajuste de precios necesario: <b>"+pct1(x.ajustePrecio)+"</b> a volumen constante para recuperar margen.");
+    if(x.tend&&x.tend.dir<0&&a.bruto>=-0.005) plan.push("Revisar la política de precios y el costo de reposición: el margen viene cayendo "+x.tend.len+" meses seguidos aunque el resultado siga en positivo.");
+    if(x.sinSueldos) plan.push("Definir la situación de los sueldos: regularizar si hay personal, o documentar por qué no hay.");
+    if(a.bruto<-0.005&&!/monotributista/i.test(state.condicion)) plan.push("Cuantificar el saldo técnico a favor de IVA y evaluar su aplicación antes de que pierda valor.");
+    if(/monotributista/i.test(state.condicion)) plan.push("Controlar la facturación acumulada contra el límite de la categoría y anticipar la recategorización.");
+    if(!plan.length) plan.push("Sostener el seguimiento mensual con este mismo cuadro: es lo que permite detectar un desvío cuando todavía es chico.");
+    plan.forEach(function(p,i){
+      var li=el("li"); li.appendChild(el("span","mk",String(i+1))); li.appendChild(para(p)); ul8.appendChild(li);
+    });
+    s8.appendChild(ul8);
+    root.appendChild(s8);
+
+    /* --- 9. comentario --- */
+    var s9=seccion(String(parseInt(sN,10)+3).padStart(2,"0"),"Comentario del período");
+    var q=el("div","quote");
+    comentario(x).forEach(function(t){ q.appendChild(para(t)); });
+    var acts=el("div","actions");
+    var bc=el("button",null,"Copiar el comentario"); bc.type="button";
+    bc.addEventListener("click",function(){ copiar(comentarioTexto(x),"repMsg"); });
+    var bi=el("button",null,"Copiar todo el informe"); bi.type="button";
+    bi.addEventListener("click",function(){ copiar(informeTexto(x),"repMsg"); });
+    var bv=el("button","primary","Volver a la carga"); bv.type="button";
+    bv.addEventListener("click",function(){ showTab("carga"); window.scrollTo(0,0); });
+    acts.appendChild(bc); acts.appendChild(bi); acts.appendChild(bv);
+    acts.appendChild(el("span","toast","")).id="repMsg";
+    q.appendChild(acts);
+    s9.appendChild(q);
+    root.appendChild(s9);
+
+    /* --- imagen para el cliente --- */
+    var sImg=seccion(String(parseInt(sN,10)+4).padStart(2,"0"),"Imagen para el cliente");
+    sImg.appendChild(para("Un resumen en una sola imagen: las cifras del ejercicio, el gráfico mes a mes y el consejo al final. Lista para mandar por mail o WhatsApp."));
+    var imgWrap=el("div","imgwrap");
+    var cardCv=document.createElement("canvas");
+    cardCv.id="cardCanvas";
+    cardCv.setAttribute("aria-label","Resumen de la devolución para enviar al cliente");
+    imgWrap.appendChild(cardCv);
+    sImg.appendChild(imgWrap);
+    var ia=el("div","actions");
+    var bImg=el("button","primary","Descargar la imagen"); bImg.type="button";
+    bImg.addEventListener("click",descargarImagen);
+    var tImg=el("span","toast",""); tImg.id="imgMsg";
+    ia.appendChild(bImg); ia.appendChild(tImg);
+    sImg.appendChild(ia);
+    root.appendChild(sImg);
+
+    var d=el("p","disc","Este informe es un indicador parcial de coherencia fiscal elaborado sobre los datos de ventas, compras, tasa, sueldos e ingresos brutos declarados. Toma las compras del mes como costo y no contempla la variación de existencias, las amortizaciones ni el resto de los gastos. No constituye un balance ni reemplaza la determinación impositiva del ejercicio.");
+    root.appendChild(d);
+
+    host.appendChild(root);
+
+    try{
+      dibujarTarjeta(cardCv);
+      if(document.fonts&&document.fonts.ready){
+        document.fonts.ready.then(function(){ try{ dibujarTarjeta(cardCv); }catch(e){} });
+      }
+    }catch(e){}
+  }
+
+  /* ------------------------------------------------- imagen para el cliente */
+  var fmt1=new Intl.NumberFormat("es-AR",{minimumFractionDigits:1,maximumFractionDigits:1});
+  function compact(v){
+    var s=v<0?"-":"", av=Math.abs(v);
+    if(av>=1e6) return s+"$"+fmt1.format(av/1e6)+" M";
+    if(av>=1e3) return s+"$"+fmt0.format(Math.round(av/1e3))+" k";
+    return s+"$"+fmt0.format(Math.round(av));
+  }
+
+  function hallazgos(x){
+    var out=[], a=x.a;
+    if(x.tend) out.push("El margen bruto "+(x.tend.dir<0?"se deteriora":"mejora")+" "+x.tend.len+
+      " meses seguidos, de "+pct(x.tend.desde.margen)+" a "+pct(x.tend.hasta.margen)+".");
+    if(x.cre&&Math.abs(x.cre.compras-x.cre.ventas)>0.05)
+      out.push("Punta a punta, las compras variaron "+pct1(x.cre.compras)+" y las ventas "+pct1(x.cre.ventas)+".");
+    if(x.atip) out.push(MESES[x.atip.mes-1]+" es atípico: las compras saltaron "+pct1(x.atip.dc)+
+      " contra "+MESES[x.atip.prev-1].toLowerCase()+".");
+    if(out.length<3&&x.cargaFiscalSV!==null)
+      out.push("Tasa e ingresos brutos suman el "+pct(x.cargaFiscalSV)+" de la facturación.");
+    if(out.length<3&&x.pico&&x.pico.caida<-0.02)
+      out.push("Las ventas cayeron "+pct1(Math.abs(x.pico.caida))+" desde el pico de "+MESES[x.pico.mes-1].toLowerCase()+".");
+    if(out.length<3&&x.sinSueldos)
+      out.push("No hay sueldos declarados sobre "+money0(a.ventas)+" de facturación.");
+    return out.slice(0,3);
+  }
+
+  function consejo(x){
+    var a=x.a, ult=x.idx[x.idx.length-1];
+    if(a.bruto<-0.005){
+      return "Antes que nada, inventario físico valuado al cierre de "+MESES[ult-1].toLowerCase()+
+             ". Si las existencias crecieron cerca de "+money0(Math.abs(a.bruto))+
+             ", la pérdida es aparente y está en el depósito. Es una sola medición y ordena todo lo demás: "+
+             "mientras no esté, cualquier otra conclusión es provisoria.";
+    }
+    if(a.total<-0.005){
+      var falta=(x.m.ventas>0&&x.costos>x.m.ventas)?x.costos-x.m.ventas:null;
+      return "El margen cubre las compras, pero no la estructura: tasa, sueldos e ingresos brutos se lo comen. "+
+             (falta!==null?("Hacen falta "+money0(falta)+" más de venta mensual para dar vuelta el mes, o recortar esa estructura. "):"")+
+             "Revisá precio de venta y gastos fijos juntos, no uno por vez.";
+    }
+    if(x.tend&&x.tend.dir<0){
+      var t="El resultado todavía es positivo, pero el margen cae "+x.tend.len+" meses seguidos. ";
+      if(x.mesesARojo!==null&&isFinite(x.mesesARojo)&&x.mesesARojo>0&&x.mesesARojo<24){
+        t+="Si sigue a este ritmo y las ventas no se mueven, el mes entra en rojo en "+
+           (x.mesesARojo<1.5?"alrededor de un mes":"unos "+Math.round(x.mesesARojo)+" meses")+". ";
+      }
+      return t+"Ajustá precios ahora, que todavía hay colchón: corregir con el resultado en positivo sale mucho más barato que hacerlo en rojo.";
+    }
+    return "El cuadro no muestra desvíos: el margen cubre la estructura y el ejercicio cierra en positivo. "+
+           "Sostené el seguimiento mes a mes, que es lo que permite ver un desvío cuando todavía es chico y no cuando ya costó plata.";
+  }
+
+  var CARD={bg:"#F4F6F5",dark:"#16211E",surf:"#FFFFFF",ink:"#16211E",ink2:"#55635F",ink3:"#879591",
+            rule:"#D5DCDA",accent:"#2F6F62",accentLt:"#7FB5A4",accentSoft:"#E3EDEA",
+            pos:"#1C6B49",posSoft:"#E4F0E8",neg:"#A1301D",negSoft:"#FBEAE6",
+            light:"#F4F6F5",lightDim:"#BFD0CC",cjoLbl:"#CDE5DD"};
+
+  function dibujarTarjeta(cv){
+    var x=analisis();
+    if(!x.idx.length) return;
+    var W=1080, PAD=72, CW=W-PAD*2, S=2;
+    var SER='"Spectral",Georgia,serif', UI='"IBM Plex Sans",system-ui,sans-serif',
+        MONO='"IBM Plex Mono",ui-monospace,Consolas,monospace';
+    var med=document.createElement("canvas").getContext("2d");
+    function f(w,s,fam){ return w+" "+s+"px "+(fam||UI); }
+    function wrap(t,font,maxW){
+      med.font=font;
+      var ws=String(t).split(/\s+/), L=[], cur="";
+      for(var i=0;i<ws.length;i++){
+        var cand=cur?cur+" "+ws[i]:ws[i];
+        if(med.measureText(cand).width>maxW&&cur){ L.push(cur); cur=ws[i]; } else cur=cand;
+      }
+      if(cur) L.push(cur);
+      return L;
+    }
+    function ls(c,v){ try{ if("letterSpacing" in c) c.letterSpacing=v; }catch(e){} }
+
+    var primero=x.idx[0], ultimo=x.idx[x.idx.length-1];
+    var cliLines=wrap((state.cliente||"Cliente").toUpperCase(),f(600,50,SER),CW);
+    var metaLines=wrap(state.condicion+"  ·  Ejercicio "+state.anio+"  ·  "+MESES[primero-1]+" a "+MESES[ultimo-1]+
+                       "  ·  "+x.idx.length+(x.idx.length===1?" mes":" meses")+" con movimiento",f(400,24),CW);
+    var ver=textoVeredicto(x);
+    var verLines=wrap(ver.txt,f(400,31,SER),CW-80);
+    var halL=hallazgos(x).map(function(t){ return wrap(t,f(400,25),CW-46); });
+    var cjoLines=wrap(consejo(x),f(400,29,SER),CW-72);
+    var hoy=new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    var pieLines=wrap("Generado el "+hoy+". Indicador parcial de coherencia fiscal: toma las compras del mes como costo "+
+                      "y no contempla variación de existencias, amortizaciones ni otros gastos. No constituye un balance.",f(400,19),CW);
+
+    var keyDefs=[
+      {k:["RESULTADO FISCAL","DEL EJERCICIO"],v:money0(x.a.total),
+       d:["Hasta "+MESES[ultimo-1].toLowerCase()+" "+state.anio].concat(x.resSV===null?[]:[pct(x.resSV)+" de las ventas"]),
+       col:(x.a.total<-0.005?CARD.neg:(x.a.total>0.005?CARD.pos:CARD.ink))},
+      {k:["MARGEN BRUTO"],v:(x.margen===null?"—":pct(x.margen)),d:["Ventas menos compras"],
+       col:(x.a.bruto<-0.005?CARD.neg:CARD.pos)},
+      {k:["MESES CON PÉRDIDA"],v:x.perdida+" de "+x.idx.length,
+       d:[(x.perdida===x.idx.length&&x.perdida>1?"Todos los cargados":"Sobre los cargados")],
+       col:(x.perdida?CARD.neg:CARD.pos)}
+    ];
+    var maxKL=1, maxDL=1;
+    keyDefs.forEach(function(K){ maxKL=Math.max(maxKL,K.k.length); maxDL=Math.max(maxDL,K.d.length); });
+
+    var COLS=[{t:"Mes",w:84},{t:"Ventas",w:186},{t:"Compras",w:186},
+              {t:"Bruto",w:170},{t:"TOTAL",w:170},{t:"Margen",w:140}];
+    var filas=x.serie.map(function(s){
+      return {lbl:MESES[s.mes-1].slice(0,3),v:[s.ventas,s.compras,s.bruto,s.total],m:s.margen};
+    });
+    filas.push({lbl:"Acum.",v:[x.a.ventas,x.a.compras,x.a.bruto,x.a.total],m:x.margen,tot:true});
+    var rowH=34, hdrH=32;
+
+    var hHeader=50+28+10+cliLines.length*60+8+metaLines.length*32+46;
+    var yKeys=hHeader+40, hKeys=22+maxKL*22+12+46+8+maxDL*24+20;
+    var yVer=yKeys+hKeys+30, hVer=60+verLines.length*42;
+    var yChart=yVer+hVer+42, hTit=32, hBox=250, hLbl=46, hChart=hTit+hBox+hLbl;
+    var yTab=yChart+hChart+26, hTab=32+hdrH+filas.length*rowH+12;
+    var yHal=yTab+hTab+30, hHal=0;
+    halL.forEach(function(L){ hHal+=L.length*34+16; });
+    var yCjo=yHal+hHal+20, hCjo=66+cjoLines.length*42+34;
+    var yPie=yCjo+hCjo+34;
+    var H=Math.round(yPie+pieLines.length*26+44);
+
+    cv.width=W*S; cv.height=H*S;
+    var c=cv.getContext("2d");
+    c.scale(S,S);
+    c.textBaseline="alphabetic"; c.textAlign="left";
+
+    c.fillStyle=CARD.bg; c.fillRect(0,0,W,H);
+    c.fillStyle=CARD.dark; c.fillRect(0,0,W,hHeader);
+    c.fillStyle=CARD.accent; c.fillRect(0,0,W,10);
+
+    var y=50+21;
+    c.font=f(600,21); c.fillStyle=CARD.accentLt; ls(c,"2.4px");
+    c.fillText("ANÁLISIS DE COHERENCIA FISCAL",PAD,y); ls(c,"0px");
+    y+=10; c.font=f(600,50,SER); c.fillStyle=CARD.light;
+    cliLines.forEach(function(L){ y+=60; c.fillText(L,PAD,y); });
+    y+=8; c.font=f(400,24); c.fillStyle=CARD.lightDim;
+    metaLines.forEach(function(L){ y+=32; c.fillText(L,PAD,y); });
+
+    function box(bx,by,bw,bh,fill,stroke){
+      c.fillStyle=fill; c.fillRect(bx,by,bw,bh);
+      if(stroke){ c.strokeStyle=stroke; c.lineWidth=1; c.strokeRect(bx+0.5,by+0.5,bw-1,bh-1); }
+    }
+
+    var bw=(CW-48)/3;
+    var yVal=yKeys+22+maxKL*22+12+36, yDes=yKeys+22+maxKL*22+12+46+8+18;
+    keyDefs.forEach(function(K,i){
+      var bx=PAD+i*(bw+24);
+      box(bx,yKeys,bw,hKeys,CARD.surf,CARD.rule);
+      if(i===0){ c.fillStyle=CARD.accent; c.fillRect(bx,yKeys,bw,4); }
+      c.font=f(600,17); c.fillStyle=CARD.ink3; ls(c,"1.2px");
+      var ky=yKeys+38;
+      K.k.forEach(function(L){ c.fillText(L,bx+22,ky); ky+=22; });
+      ls(c,"0px");
+      var fs=38; c.font=f(600,fs,SER);
+      while(c.measureText(K.v).width>bw-44&&fs>20){ fs-=2; c.font=f(600,fs,SER); }
+      c.fillStyle=K.col; c.fillText(K.v,bx+22,yVal);
+      c.font=f(400,18); c.fillStyle=CARD.ink2;
+      var dy=yDes;
+      K.d.forEach(function(L){ c.fillText(L,bx+22,dy); dy+=24; });
+    });
+
+    var vcol=ver.tono==="bad"?CARD.neg:(ver.tono==="good"?CARD.pos:CARD.accent);
+    box(PAD,yVer,CW,hVer,ver.tono==="bad"?CARD.negSoft:(ver.tono==="good"?CARD.posSoft:CARD.accentSoft),null);
+    c.fillStyle=vcol; c.fillRect(PAD,yVer,6,hVer);
+    c.font=f(400,31,SER); c.fillStyle=CARD.ink;
+    var vy=yVer+30+31;
+    verLines.forEach(function(L){ c.fillText(L,PAD+40,vy); vy+=42; });
+
+    c.font=f(600,19); c.fillStyle=CARD.accent; ls(c,"1.8px");
+    c.fillText("RESULTADO MES A MES",PAD,yChart+20); ls(c,"0px");
+    var cbTop=yChart+hTit, res=26;
+    var tot=x.serie.map(function(s){ return s.total; });
+    var mxP=Math.max(0,Math.max.apply(null,tot)), mxN=Math.max(0,-Math.min.apply(null,tot));
+    var rng=(mxP+mxN)||1, usable=hBox-res*2;
+    var zeroY=cbTop+res+(mxP/rng)*usable;
+    c.strokeStyle=CARD.rule; c.lineWidth=2;
+    c.beginPath(); c.moveTo(PAD,zeroY); c.lineTo(PAD+CW,zeroY); c.stroke();
+    var n=x.serie.length, slot=CW/n, bwid=Math.min(60,slot*0.56);
+    x.serie.forEach(function(s,i){
+      var cx=PAD+slot*(i+0.5), h=Math.abs(s.total)/rng*usable;
+      if(h<3&&Math.abs(s.total)>0.005) h=3;
+      var by=s.total>=0?zeroY-h:zeroY;
+      c.fillStyle=s.total>=0?CARD.pos:CARD.neg;
+      c.fillRect(cx-bwid/2,by,bwid,h);
+      c.font=f(500,17); c.fillStyle=CARD.ink2; c.textAlign="center";
+      c.fillText(compact(s.total),cx,s.total>=0?by-9:by+h+21);
+      c.textAlign="left";
+    });
+    c.font=f(400,20); c.fillStyle=CARD.ink3; c.textAlign="center";
+    x.serie.forEach(function(s,i){ c.fillText(ABREV[s.mes-1],PAD+slot*(i+0.5),cbTop+hBox+32); });
+    c.textAlign="left";
+
+    c.font=f(600,19); c.fillStyle=CARD.accent; ls(c,"1.8px");
+    c.fillText("EL MES A MES, EN PESOS",PAD,yTab+20); ls(c,"0px");
+    function n0(v){ return (v<-0.5?"-":"")+fmt0.format(Math.round(Math.abs(v))); }
+    var ty=yTab+32;
+    c.fillStyle=CARD.dark; c.fillRect(PAD,ty,CW,hdrH);
+    c.font=f(600,15); c.fillStyle=CARD.light; ls(c,"1px");
+    var hx=PAD;
+    COLS.forEach(function(col,j){
+      c.textAlign=j===0?"left":"right";
+      c.fillText(col.t.toUpperCase(),j===0?hx+12:hx+col.w-12,ty+21);
+      hx+=col.w;
+    });
+    ls(c,"0px"); c.textAlign="left";
+    ty+=hdrH;
+    filas.forEach(function(r,i){
+      if(r.tot){
+        c.fillStyle=CARD.accentSoft; c.fillRect(PAD,ty,CW,rowH);
+        c.strokeStyle=CARD.ink; c.lineWidth=2;
+        c.beginPath(); c.moveTo(PAD,ty); c.lineTo(PAD+CW,ty); c.stroke();
+      } else if(i%2===1){ c.fillStyle="#EFF2F1"; c.fillRect(PAD,ty,CW,rowH); }
+      var cxx=PAD, base=ty+23;
+      c.textAlign="left"; c.font=f(r.tot?600:500,19); c.fillStyle=CARD.ink;
+      c.fillText(r.lbl,cxx+12,base);
+      cxx+=COLS[0].w;
+      c.textAlign="right";
+      r.v.forEach(function(v,j){
+        var col=COLS[j+1];
+        c.font=f(r.tot?600:400,18,MONO);
+        c.fillStyle = j<2 ? CARD.ink2 : (v<-0.005?CARD.neg:(v>0.005?CARD.pos:CARD.ink2));
+        c.fillText(n0(v),cxx+col.w-12,base);
+        cxx+=col.w;
+      });
+      c.font=f(r.tot?600:400,18,MONO);
+      c.fillStyle = r.m===null?CARD.ink3:(r.m<-0.00005?CARD.neg:CARD.pos);
+      c.fillText(r.m===null?"—":pct(r.m),cxx+COLS[5].w-12,base);
+      c.textAlign="left";
+      ty+=rowH;
+    });
+
+    var hy=yHal;
+    halL.forEach(function(L){
+      c.fillStyle=CARD.accent; c.fillRect(PAD,hy+11,10,10);
+      c.font=f(400,25); c.fillStyle=CARD.ink2;
+      var ly=hy+25;
+      L.forEach(function(ln){ c.fillText(ln,PAD+30,ly); ly+=34; });
+      hy+=L.length*34+16;
+    });
+
+    box(PAD,yCjo,CW,hCjo,CARD.accent,null);
+    c.font=f(600,19); c.fillStyle=CARD.cjoLbl; ls(c,"2.4px");
+    c.fillText("EL CONSEJO",PAD+36,yCjo+44); ls(c,"0px");
+    c.font=f(400,29,SER); c.fillStyle=CARD.light;
+    var cy=yCjo+66+29;
+    cjoLines.forEach(function(L){ c.fillText(L,PAD+36,cy); cy+=42; });
+
+    c.strokeStyle=CARD.rule; c.lineWidth=1;
+    c.beginPath(); c.moveTo(PAD,yPie-20); c.lineTo(PAD+CW,yPie-20); c.stroke();
+    c.font=f(400,19); c.fillStyle=CARD.ink3;
+    var py=yPie+19;
+    pieLines.forEach(function(L){ c.fillText(L,PAD,py); py+=26; });
+  }
+
+  function nombreImagen(){
+    var s=String(state.cliente||"cliente").normalize("NFD").replace(/[̀-ͯ]/g,"")
+          .toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,50)||"cliente";
+    return "devolucion-"+s+"-"+state.anio+".png";
+  }
+  var AVISO_GUARDAR="Acá la descarga directa no está disponible: mantené apretada la imagen (o botón derecho) y guardala.";
+  function descargarImagen(){
+    var cv=document.getElementById("cardCanvas"); if(!cv) return;
+    var nom=nombreImagen();
+    var enVisor=!!(window.claude&&typeof window.claude.use==="function");
+    if(!enVisor){
+      var ok=true;
+      try{
+        var a=document.createElement("a");
+        a.href=cv.toDataURL("image/png"); a.download=nom;
+        document.body.appendChild(a); a.click(); a.remove();
+      }catch(e){ ok=false; }
+      toast("imgMsg",ok?("Descargada: "+nom):"No se pudo generar el archivo. Mantené apretada la imagen y guardala.",!ok);
+      return;
+    }
+    toast("imgMsg","Preparando la imagen…");
+    window.claude.use("downloads").then(function(d){
+      if(d&&typeof d.save==="function"){
+        cv.toBlob(function(blob){
+          if(!blob){ toast("imgMsg",AVISO_GUARDAR,true); return; }
+          Promise.resolve(d.save({filename:nom,data:blob})).then(
+            function(){ toast("imgMsg","Descargada: "+nom); },
+            function(){ toast("imgMsg","La descarga fue rechazada. "+AVISO_GUARDAR,true); });
+        },"image/png");
+      } else { toast("imgMsg",AVISO_GUARDAR,true); }
+    },function(){ toast("imgMsg",AVISO_GUARDAR,true); });
+  }
+
+  /* ------------------------------------------------- comentario en texto */
+  function comentario(x){
+    var a=x.a, out=[], ultimo=x.idx[x.idx.length-1], primero=x.idx[0];
+    var cab="<strong>"+(state.cliente||"(cliente sin nombre)")+"</strong> — "+state.condicion+
+            " — Ejercicio "+state.anio+" ("+MESES[primero-1].toLowerCase()+" a "+MESES[ultimo-1].toLowerCase()+").";
+    var p1=cab+" ";
+    if(a.total<-0.005){
+      p1+="Los "+x.idx.length+" meses con movimiento acumulan un TOTAL de "+money0(a.total)+
+          (x.resSV!==null?", el "+pct(x.resSV)+" de las ventas":"")+". ";
+      p1+= x.perdida===x.idx.length ? "Ningún mes cerró en positivo. " : (x.perdida+" de los "+x.idx.length+" meses cerraron en pérdida. ");
+    } else if(a.total>0.005){
+      p1+="Los "+x.idx.length+" meses con movimiento acumulan una ganancia de "+money0(a.total)+
+          (x.resSV!==null?", el "+pct(x.resSV)+" de las ventas":"")+". ";
+    } else {
+      p1+="El período cierra en equilibrio. ";
+    }
+    if(x.tend) p1+="El margen bruto "+(x.tend.dir<0?"se deteriora":"mejora")+" "+x.tend.len+
+                   " meses consecutivos, de "+pct(x.tend.desde.margen)+" a "+pct(x.tend.hasta.margen)+". ";
+    if(a.bruto<-0.005&&x.comprasSV!==null) p1+="Las compras equivalen al "+pct(x.comprasSV)+" de las ventas.";
+    out.push(p1.trim());
+
+    var p2="";
+    if(a.bruto<-0.005){
+      p2="Antes de tratar el resultado como pérdida definitiva corresponde practicar inventario físico valuado al cierre de "+
+         MESES[ultimo-1].toLowerCase()+": si las existencias crecieron alrededor de "+money0(Math.abs(a.bruto))+
+         " contra el inicial, la pérdida es aparente y está inmovilizada en bienes de cambio. ";
+      if(x.atip) p2+="En paralelo, depurar las compras de "+MESES[x.atip.mes-1].toLowerCase()+
+                     " —atípicas, "+pct1(x.atip.dc)+" contra "+MESES[x.atip.prev-1].toLowerCase()+"— para separar bienes de uso imputados al costo. ";
+      if(x.cargaFiscalSV!==null) p2+="La causa no es impositiva: tasa e ingresos brutos suman el "+pct(x.cargaFiscalSV)+" de la facturación.";
+    } else if(x.tend&&x.tend.dir<0){
+      p2="El resultado sigue en positivo, pero la tendencia del margen obliga a revisar la política de precios y el costo de reposición antes de que el deterioro llegue al resultado.";
+    } else {
+      p2="El cuadro no muestra inconsistencias entre compras, ventas y carga tributaria en el período analizado.";
+    }
+    if(x.sinSueldos) p2+=" No hay sueldos declarados sobre "+money0(a.ventas)+" de facturación: corresponde definir esa situación.";
+    out.push(p2.trim());
+
+    if(x.m.ventas>0){
+      var p3="Para llevar "+x.sigMes.toLowerCase()+" al equilibrio se requieren ventas de "+money0(x.costos)+
+             " ("+pct1(Math.abs(x.equilibrio))+(x.equilibrio>0?" por encima":" por debajo")+" de "+MESES[x.mc-1].toLowerCase()+")";
+      if(x.ajustePrecio>0.005) p3+=", equivalente a un ajuste de precios de "+pct1(x.ajustePrecio)+" a volumen constante";
+      p3+=". El objetivo con la ganancia estimada del papel de trabajo asciende a "+money0(x.esperada)+
+          " ("+pct1(Math.abs(x.objetivo))+(x.objetivo>0?" por encima":" por debajo")+")"+
+          (x.objetivo>0.25?", que debe leerse como brecha a cerrar y no como pronóstico":"")+".";
+      out.push(p3);
+    }
+    return out;
+  }
+  function stripTags(s){ return String(s).replace(/<[^>]*>/g,""); }
+  function comentarioTexto(x){ return comentario(x).map(stripTags).join("\n\n"); }
+
+  function informeTexto(x){
+    var a=x.a, L=[], ultimo=x.idx[x.idx.length-1], primero=x.idx[0];
+    L.push("DEVOLUCIÓN DEL PERÍODO");
+    L.push((state.cliente||"(cliente sin nombre)").toUpperCase());
+    L.push(state.condicion+" · Ejercicio "+state.anio+" · "+MESES[primero-1]+" a "+MESES[ultimo-1]);
+    L.push("");
+    L.push("RESULTADO FISCAL DEL EJERCICIO (hasta "+MESES[ultimo-1].toLowerCase()+" "+state.anio+"): "+
+           money(a.total)+(x.resSV!==null?"  ("+pct(x.resSV)+" de las ventas)":""));
+    L.push("MARGEN BRUTO: "+(x.margen===null?"—":pct(x.margen)));
+    L.push("MESES CON PÉRDIDA: "+x.perdida+" de "+x.idx.length);
+    L.push("");
+    L.push(stripTags(textoVeredicto(x).txt));
+    L.push("");
+    L.push("CUADRO DEL PERÍODO".padEnd(22)+"ACUMULADO".padStart(20)+("  "+MESES[x.mc-1]).padStart(20));
+    [["Ventas",a.ventas,x.m.ventas],["Compras",a.compras,x.m.compras],["Bruto",a.bruto,x.cm.bruto],
+     ["Tasa",a.tasa,x.m.tasa],["Sueldos",a.sueldos,x.m.sueldos],["Ingresos Brutos",a.iibb,x.m.iibb],
+     ["TOTAL",a.total,x.cm.total]].forEach(function(f){
+      L.push(String(f[0]).padEnd(22)+money(f[1]).padStart(20)+money(f[2]).padStart(22));
+    });
+    L.push("");
+    L.push("EVOLUCIÓN MENSUAL");
+    L.push("Mes".padEnd(6)+"Ventas".padStart(16)+"Compras".padStart(16)+"Bruto".padStart(16)+"TOTAL".padStart(16)+"Margen".padStart(10));
+    x.serie.forEach(function(s){
+      L.push(ABREV[s.mes-1].padEnd(6)+money0(s.ventas).padStart(16)+money0(s.compras).padStart(16)+
+             money0(s.bruto).padStart(16)+money0(s.total).padStart(16)+
+             (s.margen===null?"—":pct(s.margen)).padStart(10));
+    });
+    L.push("");
+    L.push("COMENTARIO DEL PERÍODO");
+    L.push(comentarioTexto(x));
+    L.push("");
+    L.push("Indicador parcial de coherencia fiscal. Toma las compras del mes como costo y no contempla variación de existencias, amortizaciones ni otros gastos. No constituye un balance.");
+    return L.join("\n");
+  }
+
+  function copiar(txt,msgId){
+    function fallback(){ toast(msgId,"No se pudo copiar desde este navegador.",true); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ toast(msgId,"Copiado al portapapeles."); },fallback);
+    } else fallback();
+  }
+
+  /* ------------------------------------------------- importar pegado */
+  function importPaste(txt){
+    var lines=txt.replace(/\r/g,"").split("\n").filter(function(l){ return l.trim()!==""; });
+    if(!lines.length) return "No hay nada para importar.";
+    var rows=lines.map(function(l){ return l.split(/\t|;|\s{2,}/).map(function(c){ return c.trim(); }); });
+    function keyOf(s){
+      var t=(s||"").toLowerCase();
+      if(/venta/.test(t)) return "ventas";
+      if(/compra/.test(t)) return "compras";
+      if(/tasa/.test(t)) return "tasa";
+      if(/sueldo/.test(t)) return "sueldos";
+      if(/ingreso|iibb|i\.?i\.?b\.?b/.test(t)) return "iibb";
+      if(/bruto|total/.test(t)) return "skip";
+      return null;
+    }
+    var labelled=rows.filter(function(r){ return keyOf(r[0])!==null; });
+    var n=0;
+    if(labelled.length>=2){
+      labelled.forEach(function(r){
+        var k=keyOf(r[0]); if(k==="skip") return;
+        for(var i=1;i<=12&&i<r.length;i++){ state.meses[i][k]=parseNum(r[i]); n++; }
+      });
+    } else if(rows.length>=6&&rows.length<=13){
+      var off=isNaN(parseNum(rows[0][0]))||/[a-z]/i.test(rows[0][0])?1:0;
+      rows.forEach(function(r,idx){
+        var mi=idx+1; if(mi>12) return;
+        for(var k=0;k<KEYS.length;k++){ var cell=r[off+k]; if(cell!==undefined){ state.meses[mi][KEYS[k]]=parseNum(cell); n++; } }
+      });
+    } else if(rows.length>=4&&rows.length<=7){
+      var map=rows.length===5?["ventas","compras","tasa","sueldos","iibb"]
+             :rows.length===6?["ventas","compras","skip","tasa","sueldos"]
+             :["ventas","compras","skip","tasa","sueldos","iibb","skip"];
+      rows.forEach(function(r,idx){
+        var k=map[idx]; if(!k||k==="skip") return;
+        var off=isNaN(parseNum(r[0]))?1:0;
+        for(var i=0;i<12&&off+i<r.length;i++){ state.meses[i+1][k]=parseNum(r[off+i]); n++; }
+      });
+    } else {
+      return "No pude reconocer el formato. Pegá el rango con las etiquetas de fila (Ventas, Compras, Tasa, Sueldos, Ingresos Brutos).";
+    }
+    for(var i=12;i>=1;i--){ if(tieneDatos(state.meses[i])){ state.mes_corriente=i; break; } }
+    salirDemo(); syncHeader(); render(); guardar();
+    return "Importados "+n+" valores.";
+  }
+
+  /* ------------------------------------------------- encabezado */
+  var elCli=document.getElementById("cliente"), elCon=document.getElementById("condicion"),
+      elAnio=document.getElementById("anio"), elMes=document.getElementById("mesCorriente"),
+      elMk=document.getElementById("markup"), elCf=document.getElementById("coef");
+  for(var i=0;i<12;i++){ var o=document.createElement("option"); o.value=i+1; o.textContent=MESES[i]; elMes.appendChild(o); }
+  function syncHeader(){
+    elCli.value=state.cliente; elCon.value=state.condicion; elAnio.value=state.anio;
+    elMes.value=state.mes_corriente; elMk.value=fmtM.format(state.markup); elCf.value=fmtM.format(state.coef);
+  }
+  elCli.addEventListener("input",function(){ salirDemo(); state.cliente=elCli.value; render(true); guardar(); });
+  elCon.addEventListener("change",function(){ salirDemo(); state.condicion=elCon.value; render(true); guardar(); });
+  elAnio.addEventListener("input",function(){ var v=parseInt(elAnio.value,10); if(v>1999&&v<2101){ salirDemo(); state.anio=v; render(true); guardar(); } });
+  elMes.addEventListener("change",function(){ state.mes_corriente=+elMes.value; render(true); guardar(); });
+  elMk.addEventListener("input",function(){ state.markup=parseNum(elMk.value); render(true); guardar(); });
+  elCf.addEventListener("input",function(){ state.coef=parseNum(elCf.value); render(true); guardar(); });
+  elMk.addEventListener("blur",function(){ elMk.value=fmtM.format(state.markup); });
+  elCf.addEventListener("blur",function(){ elCf.value=fmtM.format(state.coef); });
+
+  /* ------------------------------------------------- pestañas */
+  var tabC=document.getElementById("tabCarga"), tabI=document.getElementById("tabInforme"),
+      viewC=document.getElementById("viewCarga"), viewI=document.getElementById("viewInforme");
+  function showTab(which){
+    var carga=(which==="carga");
+    tabC.setAttribute("aria-selected",carga?"true":"false");
+    tabI.setAttribute("aria-selected",carga?"false":"true");
+    viewC.hidden=!carga; viewI.hidden=carga;
+    if(!carga) construirInforme();
+  }
+  tabC.addEventListener("click",function(){ showTab("carga"); });
+  tabI.addEventListener("click",function(){ showTab("informe"); });
+
+  function toast(id,msg,bad){
+    var e=document.getElementById(id); if(!e) return;
+    e.textContent=msg; e.className="toast"+(bad?" bad":"");
+    setTimeout(function(){ if(e.textContent===msg){ e.textContent=""; e.className="toast"; } },5000);
+  }
+
+  /* ------------------------------------------------- botones */
+  document.getElementById("btnVer").addEventListener("click",function(){
+    if(!indicesCargados().length){ toast("finMsg","Cargá al menos un mes con datos.",true); return; }
+    showTab("informe"); window.scrollTo(0,0);
+  });
+  document.getElementById("btnCopiarDatos").addEventListener("click",function(){
+    copiar(JSON.stringify(plain(),null,2),"finMsg");
+  });
+  function vaciar(){
+    state=normalize({condicion:elCon.value,anio:state.anio,markup:state.markup,coef:state.coef});
+    salirDemo(); syncHeader(); render(); guardar();
+    elCli.focus();
+  }
+  document.getElementById("btnVaciar").addEventListener("click",function(){
+    vaciar(); toast("finMsg","Planilla vacía. Cargá el cliente.");
+  });
+  document.getElementById("btnVaciarDemo").addEventListener("click",function(){
+    vaciar(); window.scrollTo(0,0);
+  });
+  document.getElementById("btnLoad").addEventListener("click",function(){
+    var ta=document.getElementById("jsonOut");
+    try{
+      state=normalize(JSON.parse(ta.value.trim()));
+      salirDemo(); syncHeader(); render(); guardar();
+      toast("copyMsg","Código cargado en la planilla.");
+    }catch(e){ toast("copyMsg","Pegá un código válido y volvé a tocar Cargar.",true); ta.focus(); }
+  });
+  document.getElementById("btnPaste").addEventListener("click",function(){
+    toast("pasteMsg",importPaste(document.getElementById("pasteBox").value));
+  });
+
+  /* ------------------------------------------------- arranque */
+  state=cargar();
+  buildGrid();
+  syncHeader();
+  render();
+  document.getElementById("demoBanner").hidden=!esDemo;
+})();
+</script>
+</body>
+</html>

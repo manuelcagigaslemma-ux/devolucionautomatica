@@ -5,49 +5,30 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Diagnóstico Anual</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   /* Base equivalente a la que inyecta el visor de artifacts.
      [hidden]{display:none!important} es imprescindible: las pestanas usan el
      atributo hidden sobre elementos con display:flex en linea. */
-  :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  :root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   body{margin:0;font-size:14px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   img{max-width:100%}
   [hidden]{display:none!important}
 </style>
 <style>
-/* Layout: pestañas Carga / Devolución → grilla mensual con cálculo en vivo → informe generado por secciones numeradas */
+/* Layout: pestañas Clientes / Carga / Devolución → registro con perfil → grilla mensual → informe por secciones */
+/* Tema oscuro único, con acento azul eléctrico */
 :root{
-  --paper:#EDF1F0; --surface:#FFFFFF; --surface-2:#F6F8F7;
-  --ink:#16211E; --ink-2:#55635F; --ink-3:#879591;
-  --rule:#D5DCDA; --rule-strong:#B6C1BE;
-  --accent:#2F6F62; --accent-soft:#E3EDEA;
-  --pos:#1C6B49; --pos-soft:#E4F0E8;
-  --neg:#A1301D; --neg-soft:#FBEAE6;
-  --warn:#8A5A12; --warn-soft:#FBF1DE;
-  --font-display:"Spectral",Georgia,"Times New Roman",serif;
-  --font-ui:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
-  --font-num:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#101614; --surface:#18201E; --surface-2:#1E2725;
-  --ink:#E8EEEB; --ink-2:#A3B0AC; --ink-3:#7B8884;
-  --rule:#2B3634; --rule-strong:#3C4845;
-  --accent:#6FB3A2; --accent-soft:#1E2E2A;
-  --pos:#5FBF8E; --pos-soft:#152B22;
-  --neg:#E8836B; --neg-soft:#2E1E1A;
-  --warn:#D6A95C; --warn-soft:#2B2416;
-  color-scheme:dark;
-}}
-:root[data-theme="dark"]{
-  --paper:#101614; --surface:#18201E; --surface-2:#1E2725;
-  --ink:#E8EEEB; --ink-2:#A3B0AC; --ink-3:#7B8884;
-  --rule:#2B3634; --rule-strong:#3C4845;
-  --accent:#6FB3A2; --accent-soft:#1E2E2A;
-  --pos:#5FBF8E; --pos-soft:#152B22;
-  --neg:#E8836B; --neg-soft:#2E1E1A;
-  --warn:#D6A95C; --warn-soft:#2B2416;
-  color-scheme:dark;
+  --paper:#0A0E1A; --surface:#121829; --surface-2:#182036;
+  --ink:#EAF0FF; --ink-2:#A9B4CE; --ink-3:#8794B3;
+  --rule:#263150; --rule-strong:#3A4870;
+  --accent:#4A93FF; --accent-fill:#1F6BFF; --accent-soft:#14264D; --on-accent:#FFFFFF;
+  --glow:rgba(31,107,255,.35);
+  --pos:#4ADE9A; --pos-soft:#10291F;
+  --neg:#FF7D6B; --neg-soft:#331A1C;
+  --warn:#E8B55A; --warn-soft:#2C2413;
+  --font-display:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-ui:"Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-num:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,monospace;
 }
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;margin:0}
@@ -62,7 +43,7 @@ h2{font-size:1.1rem}
 .pad{padding:18px}
 .note{font-size:.78rem;color:var(--ink-2);margin:0}
 
-header.top{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:12px}
+header.top{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--accent-fill);padding-bottom:12px}
 header.top p{margin:2px 0 0;color:var(--ink-2);font-size:.86rem;max-width:62ch}
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--rule)}
 .tab{font-family:inherit;font-size:.88rem;font-weight:500;color:var(--ink-2);background:transparent;border:none;border-bottom:3px solid transparent;border-radius:0;padding:10px 16px;cursor:pointer}
@@ -159,8 +140,8 @@ tfoot th{position:sticky;left:0;z-index:4;text-align:left;font-family:var(--font
 .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 button{font-family:inherit;font-size:.86rem;font-weight:500;color:var(--ink);background:var(--surface-2);border:1px solid var(--rule-strong);border-radius:3px;padding:9px 14px;cursor:pointer}
 button:hover{border-color:var(--accent);color:var(--accent)}
-button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
-button.primary:hover{opacity:.9;color:var(--surface)}
+button.primary{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--on-accent)}
+button.primary:hover{opacity:.9;color:var(--on-accent);box-shadow:0 0 0 3px var(--glow)}
 .toast{font-size:.8rem;color:var(--accent)}
 .toast.bad{color:var(--neg)}
 .paste{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
@@ -172,27 +153,124 @@ button.primary:hover{opacity:.9;color:var(--surface)}
 .empty b{font-family:var(--font-display);font-size:1.05rem;font-weight:600;color:var(--ink)}
 .empty span{font-size:.84rem;max-width:46ch}
 footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:12px}
-@media (max-width:560px){h1{font-size:1.4rem}.wrap{padding-block:20px 44px}.rhead .cli{font-size:1.5rem}.tab{padding:10px 12px;font-size:.82rem}}
+/* ---------- logo de texto ---------- */
+.logo{font-family:var(--font-display);font-size:1.15rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin-bottom:10px;text-shadow:0 0 22px var(--glow)}
+.logo span{color:var(--accent)}
+
+/* ---------- registro y perfiles ---------- */
+.registro{max-width:560px;width:100%;margin:0 auto;padding:26px;border-radius:12px;border-top:3px solid var(--accent-fill);box-shadow:0 0 44px -14px var(--glow)}
+.registro form{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+::placeholder{color:var(--ink-3);opacity:1}
+.field .req{color:var(--accent)}
+.field input[aria-invalid="true"]{border-color:var(--neg)}
+.field .err{font-size:.78rem;color:var(--neg);min-height:1.2em}
+.registro button.primary{padding:12px 16px;font-size:.95rem;border-radius:6px}
+.confirma{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px}
+.confirma h2{font-size:1.3rem}
+.confirma h2:focus{outline:none}
+.confirma .tilde{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;background:var(--accent-fill);color:var(--on-accent);box-shadow:0 0 30px var(--glow)}
+.confirma .reg{font-family:var(--font-num);font-size:2rem;font-weight:700;color:var(--accent);letter-spacing:.04em}
+.confirma .quien{font-size:1.05rem;font-weight:600;overflow-wrap:anywhere}
+.confirma .actions{justify-content:center;margin-top:6px}
+.perfiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:14px;margin-top:12px}
+.perfil{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.perfil.activo{border-color:var(--accent-fill);box-shadow:0 0 0 1px var(--accent-fill)}
+.perfil .reg{font-family:var(--font-num);font-size:.78rem;font-weight:600;color:var(--accent)}
+.perfil h3{font-size:1.02rem;overflow-wrap:anywhere}
+.perfil .dato{font-size:.84rem;color:var(--ink-2);overflow-wrap:anywhere}
+.perfil .actions{margin-top:8px}
+.perfilbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--rule);border-left:3px solid var(--accent-fill);border-radius:4px;background:var(--surface);font-size:.86rem;overflow-wrap:anywhere}
+.perfilbar button{font-size:.78rem;padding:6px 11px}
+
+/* ---------- aparición suave ---------- */
+@keyframes aparecer{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card,.panel,.perfil,.confirma,.key{animation:aparecer .35s ease-out}
+@media (max-width:560px){h1{font-size:1.4rem}.wrap{padding-block:20px 44px}.registro{padding:20px 16px}.rhead .cli{font-size:1.5rem}.tab{padding:10px 12px;font-size:.82rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+</head>
+<body>
 
 <div class="wrap">
 
   <header class="top">
     <div>
+      <div class="logo">Cumbre Digital <span>MX 2026</span></div>
       <div class="eyebrow">Análisis de coherencia fiscal</div>
       <h1>Diagnóstico Anual</h1>
-      <p>Cargá las ventas, compras, tasa, sueldos e ingresos brutos de cada mes. La página calcula el ejercicio y redacta la devolución para el cliente.</p>
+      <p>Registrá al cliente y cargá las ventas, compras, tasa, sueldos e ingresos brutos de cada mes. La página calcula el ejercicio y redacta la devolución para el cliente.</p>
     </div>
   </header>
 
   <div class="tabs" role="tablist">
-    <button type="button" class="tab" id="tabCarga" role="tab" aria-selected="true" aria-controls="viewCarga">Carga de datos</button>
+    <button type="button" class="tab" id="tabClientes" role="tab" aria-selected="true" aria-controls="viewClientes">Clientes</button>
+    <button type="button" class="tab" id="tabCarga" role="tab" aria-selected="false" aria-controls="viewCarga">Carga de datos</button>
     <button type="button" class="tab" id="tabInforme" role="tab" aria-selected="false" aria-controls="viewInforme">Devolución</button>
   </div>
 
+  <!-- Barra con el perfil en uso (se ve en Carga y Devolución) -->
+  <div class="perfilbar" id="perfilBar" hidden>
+    <span id="perfilTxt"></span>
+    <span class="actions">
+      <button type="button" id="btnCambiar">Elegir cliente</button>
+      <button type="button" id="btnSalirPerfil">Salir del perfil</button>
+    </span>
+  </div>
+
+  <!-- ===================== CLIENTES ===================== -->
+  <div id="viewClientes" role="tabpanel" aria-labelledby="tabClientes" style="display:flex;flex-direction:column;gap:28px">
+
+    <section class="card registro">
+      <!-- Formulario de registro -->
+      <div id="regForm">
+        <h2>Registro de cliente</h2>
+        <p class="note">Los tres campos son obligatorios.</p>
+        <form id="formCliente" novalidate autocomplete="off">
+          <div class="field">
+            <label for="regNombre">Nombre completo <span class="req" aria-hidden="true">*</span></label>
+            <input id="regNombre" type="text" maxlength="100" required aria-describedby="errNombre">
+            <span class="err" id="errNombre"></span>
+          </div>
+          <div class="field">
+            <label for="regEmail">Email <span class="req" aria-hidden="true">*</span></label>
+            <input id="regEmail" type="email" maxlength="254" required placeholder="nombre@empresa.com" aria-describedby="errEmail">
+            <span class="err" id="errEmail"></span>
+          </div>
+          <div class="field">
+            <label for="regEmpresa">Empresa u organización <span class="req" aria-hidden="true">*</span></label>
+            <input id="regEmpresa" type="text" maxlength="120" required aria-describedby="errEmpresa">
+            <span class="err" id="errEmpresa"></span>
+          </div>
+          <button type="submit" class="primary">Registrar cliente</button>
+        </form>
+      </div>
+
+      <!-- Pantalla de confirmación -->
+      <div id="regConfirma" class="confirma" hidden>
+        <div class="tilde" aria-hidden="true">✓</div>
+        <h2 id="confTitulo" tabindex="-1">Registro confirmado</h2>
+        <div class="eyebrow">Número de registro</div>
+        <div class="reg" id="confReg"></div>
+        <div class="eyebrow">Cliente registrado</div>
+        <div class="quien" id="confNombre"></div>
+        <p class="note" id="confAviso" hidden>El navegador no permite guardar datos: este perfil se pierde al cerrar la página.</p>
+        <div class="actions">
+          <button type="button" class="primary" id="btnOtra">Registrar a otra persona</button>
+          <button type="button" id="btnIrPlanilla">Cargar su planilla</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="eyebrow">Perfiles</div>
+      <h2>Clientes registrados</h2>
+      <p class="note">Cada perfil tiene su propia planilla. Se guardan solo en este navegador.</p>
+      <div class="perfiles" id="listaPerfiles"></div>
+    </section>
+  </div>
+
   <!-- ===================== CARGA ===================== -->
-  <div id="viewCarga" role="tabpanel" style="display:flex;flex-direction:column;gap:22px">
+  <div id="viewCarga" role="tabpanel" hidden style="display:flex;flex-direction:column;gap:22px">
 
     <div class="banner" id="demoBanner">
       <span><b>Datos de ejemplo cargados</b> — son inventados, para mostrar cómo sale la devolución. Vaciá la planilla y cargá los del cliente.</span>
@@ -339,7 +417,9 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
   var ABREV=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
   var KEYS=["ventas","compras","tasa","sueldos","iibb"];
   var LABELS={ventas:"Ventas",compras:"Compras",tasa:"Tasa",sueldos:"Sueldos",iibb:"Ingresos Brutos"};
-  var STORE="diaganual.v1";
+  var STORE="diaganual.v1";                    // planilla general (sin perfil)
+  var STORE_PERFILES="diaganual.perfiles.v1";  // lista de perfiles de clientes
+  var STORE_ACTIVO="diaganual.activo.v1";      // registro del perfil en uso
 
   /* ------------------------------------------------- números */
   function parseNum(s){
@@ -419,6 +499,9 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
     return normalize(EJEMPLO);
   }
   function guardar(){
+    // con un perfil abierto, la planilla se guarda dentro de ese perfil
+    var pf=buscarPerfil(perfilActivo);
+    if(pf){ pf.planilla=plain(); guardarPerfiles(); return; }
     try{ var p=plain(); p.demo=esDemo; localStorage.setItem(STORE,JSON.stringify(p)); }catch(e){}
   }
   function salirDemo(){
@@ -426,6 +509,182 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
     esDemo=false;
     document.getElementById("demoBanner").hidden=true;
   }
+
+  /* ------------------------------------------------- perfiles de clientes */
+  var perfiles=[], perfilActivo=null;
+
+  function buscarPerfil(reg){
+    for(var i=0;i<perfiles.length;i++) if(perfiles[i].reg===reg) return perfiles[i];
+    return null;
+  }
+  function leerPerfiles(){
+    var raw=null;
+    try{
+      raw=localStorage.getItem(STORE_PERFILES);
+      var d=raw?JSON.parse(raw):[];
+      // se descarta cualquier entrada que no tenga un número de registro válido
+      return (Array.isArray(d)?d:[]).filter(function(p){ return p&&/^REG-\d{4}$/.test(p.reg); }).map(function(p){
+        return { reg:p.reg, nombre:String(p.nombre||""), email:String(p.email||""),
+                 empresa:String(p.empresa||""), alta:String(p.alta||""), planilla:p.planilla||{} };
+      });
+    }catch(e){
+      // si los datos están dañados se deja una copia antes de empezar de cero
+      try{ if(raw) localStorage.setItem(STORE_PERFILES+".respaldo",raw); }catch(e2){}
+      return [];
+    }
+  }
+  function guardarPerfiles(){
+    try{ localStorage.setItem(STORE_PERFILES,JSON.stringify(perfiles)); return true; }catch(e){ return false; }
+  }
+  function recordarActivo(){
+    try{
+      if(perfilActivo) localStorage.setItem(STORE_ACTIVO,perfilActivo);
+      else localStorage.removeItem(STORE_ACTIVO);
+    }catch(e){}
+  }
+
+  /* número de registro REG-XXXX al azar, sin repetir los ya usados */
+  function generarRegistro(){
+    var libres=[];
+    for(var i=0;i<10000;i++){
+      var r="REG-"+String(i).padStart(4,"0");
+      if(!buscarPerfil(r)) libres.push(r);
+    }
+    return libres.length? libres[Math.floor(Math.random()*libres.length)] : null;
+  }
+
+  /* carga en pantalla la planilla del perfil, o la general si reg es null */
+  function abrirPerfil(reg){
+    var pf=buscarPerfil(reg);
+    perfilActivo=pf?pf.reg:null;
+    recordarActivo();
+    if(pf){ esDemo=false; state=normalize(pf.planilla); }
+    else { state=cargar(); }
+    document.getElementById("demoBanner").hidden=!esDemo;
+    syncHeader(); render(); pintarPerfiles();
+  }
+
+  function eliminarPerfil(reg){
+    perfiles=perfiles.filter(function(p){ return p.reg!==reg; });
+    guardarPerfiles();
+    if(perfilActivo===reg) abrirPerfil(null); else pintarPerfiles();
+  }
+
+  /* dibuja la barra del perfil en uso y la lista de tarjetas */
+  function pintarPerfiles(){
+    var pf=buscarPerfil(perfilActivo);
+    document.getElementById("perfilTxt").textContent=pf
+      ? "Perfil: "+pf.nombre+" · "+pf.empresa+" · "+pf.reg
+      : "Planilla general, sin perfil de cliente";
+    document.getElementById("btnSalirPerfil").hidden=!pf;
+
+    var host=document.getElementById("listaPerfiles");
+    host.textContent="";
+    if(!perfiles.length){ host.appendChild(el("p","note","Todavía no hay clientes registrados.")); return; }
+    perfiles.slice().reverse().forEach(function(p){
+      var c=el("article","perfil"+(p.reg===perfilActivo?" activo":""));
+      c.appendChild(el("div","reg",p.reg+(p.reg===perfilActivo?" · en uso":"")));
+      c.appendChild(el("h3",null,p.nombre));
+      c.appendChild(el("div","dato",p.empresa));
+      c.appendChild(el("div","dato",p.email));
+      var f=new Date(p.alta), pl=normalize(p.planilla), n=0;
+      for(var i=1;i<=12;i++) if(tieneDatos(pl.meses[i])) n++;
+      c.appendChild(el("div","dato",(isNaN(f)?"":"Alta "+f.toLocaleDateString("es-AR")+" · ")+
+        (n===0?"planilla vacía":n+(n===1?" mes cargado":" meses cargados"))));
+      var acts=el("div","actions");
+      var ab=el("button","primary","Abrir planilla"); ab.type="button";
+      ab.addEventListener("click",function(){ abrirPerfil(p.reg); showTab("carga"); window.scrollTo(0,0); });
+      // eliminar pide un segundo clic, porque no se puede deshacer
+      var bo=el("button",null,"Eliminar"); bo.type="button";
+      bo.setAttribute("aria-label","Eliminar a "+p.nombre);
+      bo.addEventListener("click",function(){
+        if(bo.dataset.seguro){ eliminarPerfil(p.reg); return; }
+        bo.dataset.seguro="1"; bo.textContent="¿Eliminar con su planilla?"; bo.removeAttribute("aria-label");
+        setTimeout(function(){ delete bo.dataset.seguro; bo.textContent="Eliminar"; bo.setAttribute("aria-label","Eliminar a "+p.nombre); },5000);
+      });
+      acts.appendChild(ab); acts.appendChild(bo);
+      c.appendChild(acts);
+      host.appendChild(c);
+    });
+  }
+
+  /* ------------------------------------------------- formulario de registro */
+  var CAMPOS=[["regNombre","errNombre"],["regEmail","errEmail"],["regEmpresa","errEmpresa"]];
+  function valorCampo(id){ return document.getElementById(id).value.trim().replace(/\s+/g," "); }
+  function emailValido(s){
+    return s.length<=254 && s.indexOf("..")===-1 &&
+           /^[a-z0-9_%+'\-](?:[a-z0-9._%+'\-]*[a-z0-9_%+'\-])?@(?:[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(s);
+  }
+  /* devuelve el mensaje de error del campo, o "" si está bien */
+  function errorCampo(id){
+    var v=valorCampo(id);
+    if(id==="regNombre"){
+      if(!v) return "Ingresá el nombre completo.";
+      return /\p{L}/u.test(v)?"":"El nombre tiene que incluir letras.";
+    }
+    if(id==="regEmpresa") return v?"":"Ingresá la empresa u organización.";
+    if(!v) return "Ingresá el email.";
+    if(!emailValido(v)) return "El email no es válido. Ejemplo: nombre@empresa.com";
+    var rep=perfiles.filter(function(p){ return p.email.toLowerCase()===v.toLowerCase(); })[0];
+    return rep?"Ese email ya está registrado.":"";
+  }
+  function mostrarError(id,errId,msg){
+    var inp=document.getElementById(id);
+    if(msg) inp.setAttribute("aria-invalid","true"); else inp.removeAttribute("aria-invalid");
+    document.getElementById(errId).textContent=msg;
+  }
+  function mostrarFormulario(){
+    document.getElementById("formCliente").reset();
+    CAMPOS.forEach(function(c){ mostrarError(c[0],c[1],""); });
+    document.getElementById("regConfirma").hidden=true;
+    document.getElementById("regForm").hidden=false;
+    document.getElementById("regNombre").focus();
+  }
+  var ultimoRegistro=null;
+  function enviarRegistro(e){
+    e.preventDefault();
+    var primeroMal=null;
+    CAMPOS.forEach(function(c){
+      var msg=errorCampo(c[0]);
+      mostrarError(c[0],c[1],msg);
+      if(msg&&!primeroMal) primeroMal=c[0];
+    });
+    if(primeroMal){ document.getElementById(primeroMal).focus(); return; }
+    var reg=generarRegistro();
+    if(!reg){ mostrarError("regNombre","errNombre","No quedan números de registro libres. Eliminá algún perfil."); return; }
+    var nombre=valorCampo("regNombre");
+    perfiles.push({ reg:reg, nombre:nombre, email:valorCampo("regEmail"), empresa:valorCampo("regEmpresa"),
+                    alta:new Date().toISOString(), planilla:{cliente:nombre} });
+    ultimoRegistro=reg;
+    document.getElementById("confAviso").hidden=guardarPerfiles();
+    document.getElementById("confReg").textContent=reg;
+    document.getElementById("confNombre").textContent=nombre;
+    document.getElementById("regForm").hidden=true;
+    document.getElementById("regConfirma").hidden=false;
+    document.getElementById("confTitulo").focus();
+    pintarPerfiles();
+  }
+  document.getElementById("formCliente").addEventListener("submit",enviarRegistro);
+  CAMPOS.forEach(function(c){
+    // una vez marcado un error, se vuelve a validar mientras se corrige
+    document.getElementById(c[0]).addEventListener("input",function(e){
+      if(e.target.getAttribute("aria-invalid")) mostrarError(c[0],c[1],errorCampo(c[0]));
+    });
+  });
+  document.getElementById("btnOtra").addEventListener("click",mostrarFormulario);
+  document.getElementById("btnIrPlanilla").addEventListener("click",function(){
+    if(!buscarPerfil(ultimoRegistro)){ mostrarFormulario(); return; }
+    abrirPerfil(ultimoRegistro); showTab("carga"); window.scrollTo(0,0);
+  });
+  document.getElementById("btnCambiar").addEventListener("click",function(){ showTab("clientes"); window.scrollTo(0,0); });
+  document.getElementById("btnSalirPerfil").addEventListener("click",function(){ abrirPerfil(null); showTab("carga"); });
+  // si otra pestaña del navegador cambia los perfiles, se actualiza la lista
+  window.addEventListener("storage",function(e){
+    if(e.key!==STORE_PERFILES) return;
+    perfiles=leerPerfiles();
+    if(perfilActivo) abrirPerfil(perfilActivo); else pintarPerfiles();
+    if(!viewI.hidden) construirInforme();
+  });
 
   /* ------------------------------------------------- cálculo */
   function mesCalc(m){ var b=m.ventas-m.compras; return {bruto:b,total:b-m.tasa-m.sueldos-m.iibb}; }
@@ -438,7 +697,7 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
   function indicesCargados(){ var r=[]; for(var i=1;i<=12;i++) if(tieneDatos(state.meses[i])) r.push(i); return r; }
   function conPerdida(){ var n=0; indicesCargados().forEach(function(i){ if(mesCalc(state.meses[i]).total<0) n++; }); return n; }
 
-  /* longest monotone run; cmp(prev,cur) true = la serie sigue en esa dirección */
+  /* racha monótona más larga; cmp(anterior,actual) true = la serie sigue en esa dirección */
   function rachaMas(serie,cmp){
     if(serie.length<2) return {len:1,start:0,end:0};
     var bestLen=1,bestStart=0,len=1,start=0;
@@ -638,6 +897,7 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
     if(txt!=null) e.textContent=txt;
     return e;
   }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function para(html){ var p=document.createElement("p"); p.innerHTML=html; return p; }
   function seccion(n,titulo){
     var s=el("section","sec");
@@ -1022,17 +1282,17 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
            "Sostené el seguimiento mes a mes, que es lo que permite ver un desvío cuando todavía es chico y no cuando ya costó plata.";
   }
 
-  var CARD={bg:"#F4F6F5",dark:"#16211E",surf:"#FFFFFF",ink:"#16211E",ink2:"#55635F",ink3:"#879591",
-            rule:"#D5DCDA",accent:"#2F6F62",accentLt:"#7FB5A4",accentSoft:"#E3EDEA",
+  var CARD={bg:"#F4F6F5",dark:"#0A0E1A",surf:"#FFFFFF",ink:"#121829",ink2:"#4C5877",ink3:"#75809B",
+            rule:"#D5DBE8",accent:"#1F6BFF",accentLt:"#7FB0FF",accentSoft:"#E4EDFF",
             pos:"#1C6B49",posSoft:"#E4F0E8",neg:"#A1301D",negSoft:"#FBEAE6",
-            light:"#F4F6F5",lightDim:"#BFD0CC",cjoLbl:"#CDE5DD"};
+            light:"#F4F6F5",lightDim:"#BFCBE4",cjoLbl:"#DCE8FF"};
 
   function dibujarTarjeta(cv){
     var x=analisis();
     if(!x.idx.length) return;
     var W=1080, PAD=72, CW=W-PAD*2, S=2;
-    var SER='"Spectral",Georgia,serif', UI='"IBM Plex Sans",system-ui,sans-serif',
-        MONO='"IBM Plex Mono",ui-monospace,Consolas,monospace';
+    var SER='"Segoe UI",system-ui,sans-serif', UI='"Segoe UI",system-ui,sans-serif',
+        MONO='ui-monospace,Consolas,monospace';
     var med=document.createElement("canvas").getContext("2d");
     function f(w,s,fam){ return w+" "+s+"px "+(fam||UI); }
     function wrap(t,font,maxW){
@@ -1260,7 +1520,7 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
   /* ------------------------------------------------- comentario en texto */
   function comentario(x){
     var a=x.a, out=[], ultimo=x.idx[x.idx.length-1], primero=x.idx[0];
-    var cab="<strong>"+(state.cliente||"(cliente sin nombre)")+"</strong> — "+state.condicion+
+    var cab="<strong>"+esc(state.cliente||"(cliente sin nombre)")+"</strong> — "+esc(state.condicion)+
             " — Ejercicio "+state.anio+" ("+MESES[primero-1].toLowerCase()+" a "+MESES[ultimo-1].toLowerCase()+").";
     var p1=cab+" ";
     if(a.total<-0.005){
@@ -1305,7 +1565,7 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
     }
     return out;
   }
-  function stripTags(s){ return String(s).replace(/<[^>]*>/g,""); }
+  function stripTags(s){ return String(s).replace(/<[^>]*>/g,"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&"); }
   function comentarioTexto(x){ return comentario(x).map(stripTags).join("\n\n"); }
 
   function informeTexto(x){
@@ -1414,15 +1674,20 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
   elCf.addEventListener("blur",function(){ elCf.value=fmtM.format(state.coef); });
 
   /* ------------------------------------------------- pestañas */
+  var tabP=document.getElementById("tabClientes"), viewP=document.getElementById("viewClientes"),
+      barra=document.getElementById("perfilBar");
   var tabC=document.getElementById("tabCarga"), tabI=document.getElementById("tabInforme"),
       viewC=document.getElementById("viewCarga"), viewI=document.getElementById("viewInforme");
   function showTab(which){
-    var carga=(which==="carga");
-    tabC.setAttribute("aria-selected",carga?"true":"false");
-    tabI.setAttribute("aria-selected",carga?"false":"true");
-    viewC.hidden=!carga; viewI.hidden=carga;
-    if(!carga) construirInforme();
+    tabP.setAttribute("aria-selected",which==="clientes"?"true":"false");
+    tabC.setAttribute("aria-selected",which==="carga"?"true":"false");
+    tabI.setAttribute("aria-selected",which==="informe"?"true":"false");
+    viewP.hidden=which!=="clientes"; viewC.hidden=which!=="carga"; viewI.hidden=which!=="informe";
+    barra.hidden=which==="clientes";
+    if(which==="clientes") pintarPerfiles();
+    if(which==="informe") construirInforme();
   }
+  tabP.addEventListener("click",function(){ showTab("clientes"); });
   tabC.addEventListener("click",function(){ showTab("carga"); });
   tabI.addEventListener("click",function(){ showTab("informe"); });
 
@@ -1441,7 +1706,8 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
     copiar(JSON.stringify(plain(),null,2),"finMsg");
   });
   function vaciar(){
-    state=normalize({condicion:elCon.value,anio:state.anio,markup:state.markup,coef:state.coef});
+    var pf=buscarPerfil(perfilActivo);
+    state=normalize({cliente:pf?pf.nombre:"",condicion:elCon.value,anio:state.anio,markup:state.markup,coef:state.coef});
     salirDemo(); syncHeader(); render(); guardar();
     elCli.focus();
   }
@@ -1464,11 +1730,12 @@ footer.foot{font-size:.74rem;color:var(--ink-3);border-top:1px solid var(--rule)
   });
 
   /* ------------------------------------------------- arranque */
-  state=cargar();
+  perfiles=leerPerfiles();
   buildGrid();
-  syncHeader();
-  render();
-  document.getElementById("demoBanner").hidden=!esDemo;
+  var regInicial=null;
+  try{ regInicial=localStorage.getItem(STORE_ACTIVO); }catch(e){}
+  abrirPerfil(regInicial);
+  showTab(perfilActivo?"carga":"clientes");
 })();
 </script>
 </body>
